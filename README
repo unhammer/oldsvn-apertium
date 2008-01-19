@@ -1,0 +1,60 @@
+REQUIREMENTS
+
+* This package needs lttoolbox-3.0 package  installed in the
+system.
+
+DESCRIPTION
+
+When building, this package generates the following modules:
+
+* apertium-deshtml, apertium-desrtf, apertium-destxt
+  Deformatters for html, rtf and txt document formats.
+
+* apertium-rehtml, apertium-rertf, apertium-retxt
+  Reformatters for html, rtf and txt document formats.
+
+* apertium-gen-tagger
+  Tagger modules generator.
+
+* apertium-gen-transfer
+  Transfer modules generator.
+
+* apertium
+  Translator program.  Execute without parameters to see the usage.
+
+QUICK START
+
+1) Download the packages for lttoolbox-VERSION.tar.gz and 
+   apertium-VERSION.tar.gz and linguistic data	
+
+2) Unpack lttoolbox and do ('#' means 'do that with root privileges'):
+   $ cd lttoolbox-VERSION
+   $ ./configure
+   $ make
+   # make install
+
+3) Unpack apertium and do:
+   $ cd apertium-VERSION
+   $ ./configure
+   $ make
+   # make install
+
+4) Unpack linguistic data (LING_DATA_DIR) and do:
+   $ cd LING_DATA_DIR
+   $ make
+   and wait for a while (minutes).  
+
+5) Use the translator
+   
+   USAGE: apertium [-d datadir] [-f format] [-u] <translation> [in [out]]
+    -d datadir       directory of linguistic data
+    -f format        one of: txt (default), html, rtf
+    -u               don't display marks '*' for unknown words
+    translation      typically, LANG1-LANG2, but see modes.xml in language data
+    in               input file (stdin by default)
+    out              output file (stdout by default)
+
+
+   Sample:
+
+   $ apertium es-ca txt <input >output
