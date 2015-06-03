@@ -291,7 +291,7 @@ Transfer::checkIndex(xmlNode *element, int index, int limit)
 
 
 std::pair<int, string>
-Transfer::wordBlankPos(xmlNode *element)
+Transfer::wordBlankPos(xmlNode *element, string best_so_far)
 {
   map<xmlNode *, TransferInstr>::iterator it;
   it = evalStringCache.find(element);
@@ -653,11 +653,14 @@ Transfer::processOut(xmlNode *localroot)
         if(!xmlStrcmp(i->name, (const xmlChar *) "lu"))
         {
           string myword;
+          std::pair<int, string> blankfrom;
           for(xmlNode *j = i->children; j != NULL; j = j->next)
           {
             if(j->type == XML_ELEMENT_NODE)
             {
               myword.append(evalString(j));
+              blankfrom = wordBlankPos(j, blankfrom.second);
+              cerr <<"blank from "<<blankfrom.first<<":"<<blankfrom.second<<endl;
             }
           }
           if(myword != "")
