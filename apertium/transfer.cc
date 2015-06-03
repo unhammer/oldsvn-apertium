@@ -290,7 +290,44 @@ Transfer::checkIndex(xmlNode *element, int index, int limit)
 }
 
 
-string 
+std::pair<int, string>
+Transfer::wordBlankPos(xmlNode *element)
+{
+  map<xmlNode *, TransferInstr>::iterator it;
+  it = evalStringCache.find(element);
+  if(it == evalStringCache.end())
+  {
+    string _ = evalString(element);
+    it = evalStringCache.find(element);
+  }
+
+  if(it != evalStringCache.end())
+  {
+    TransferInstr &ti = it->second;
+    switch(ti.getType())
+    {
+      case ti_clip_sl:
+      case ti_clip_tl:
+      case ti_linkto_sl:
+      case ti_linkto_tl:
+        if(checkIndex(element, ti.getPos(), lword))
+        {
+          return std::make_pair<int, string>(ti.getPos(), ti.getContent());
+        }
+        break;
+
+      default:
+        return std::make_pair<int, string>(-1, NULL);
+    }
+  }
+  else
+  {
+    wcerr << L"Warning: evalString didn't seem to fill the cache in " << UtfConverter::fromUtf8((char *) doc->URL) <<L": line " << element->line << endl;
+  }
+  return std::make_pair<int, string>(-1, NULL);
+}
+
+string
 Transfer::evalString(xmlNode *element)
 {
   map<xmlNode *, TransferInstr>::iterator it;
@@ -313,42 +350,42 @@ Transfer::evalString(xmlNode *element)
           return word[ti.getPos()]->target(attr_items[ti.getContent()], ti.getCondition());
         }
         break;
-      
+
       case ti_linkto_sl:
         if(checkIndex(element, ti.getPos(), lword))
         {
           if(word[ti.getPos()]->source(attr_items[ti.getContent()], ti.getCondition()) != "")
           {
             return "<" + string((char *) ti.getPointer()) + ">";
-          }        
+          }
           else
           {
             return "";
           }
         }
         break;
-        
+
       case ti_linkto_tl:
         if(checkIndex(element, ti.getPos(), lword))
         {
           if(word[ti.getPos()]->target(attr_items[ti.getContent()], ti.getCondition()) != "")
           {
             return "<" + string((char *) ti.getPointer()) + ">";
-          }        
+          }
           else
           {
             return "";
           }
         }
         break;
-          
+
       case ti_var:
         return variables[ti.getContent()];
 
       case ti_lit_tag:
       case ti_lit:
         return ti.getContent();
-        
+
       case ti_b:
         if(checkIndex(element, ti.getPos(), lblank))
         {
@@ -359,29 +396,29 @@ Transfer::evalString(xmlNode *element)
           return " ";
         }
         break;
-        
+
       case ti_get_case_from:
         if(checkIndex(element, ti.getPos(), lword))
         {
           return copycase(word[ti.getPos()]->source(attr_items[ti.getContent()]),
-                  evalString((xmlNode *) ti.getPointer()));
+                          evalString((xmlNode *) ti.getPointer()));
         }
         break;
-        
+
       case ti_case_of_sl:
         if(checkIndex(element, ti.getPos(), lword))
         {
           return caseOf(word[ti.getPos()]->source(attr_items[ti.getContent()]));
         }
         break;
-      
+
       case ti_case_of_tl:
         if(checkIndex(element, ti.getPos(), lword))
         {
           return caseOf(word[ti.getPos()]->target(attr_items[ti.getContent()]));
         }
         break;
-        
+
       default:
         return "";
     }
@@ -398,15 +435,15 @@ Transfer::evalString(xmlNode *element)
     {
       if(!xmlStrcmp(i->name, (const xmlChar *) "side"))
       {
-	side = i->children->content;
+        side = i->children->content;
       }
       else if(!xmlStrcmp(i->name, (const xmlChar *) "part"))
       {
-	part = i->children->content;
+        part = i->children->content;
       }
       else if(!xmlStrcmp(i->name, (const xmlChar *) "pos"))
       {
-	pos = atoi((const char *)i->children->content) - 1;
+        pos = atoi((const char *)i->children->content) - 1;
       }
       else if(!xmlStrcmp(i->name, (const xmlChar *) "queue"))
       {
@@ -430,8 +467,8 @@ Transfer::evalString(xmlNode *element)
       else
       {
         evalStringCache[element] = TransferInstr(ti_linkto_tl, (const char *) part, pos, (void *) as, queue);
-      }      
-    }      
+      }
+    }
     else if(!xmlStrcmp(side, (const xmlChar *) "sl"))
     {
       evalStringCache[element] = TransferInstr(ti_clip_sl, (const char *) part, pos, NULL, queue);
@@ -443,8 +480,8 @@ Transfer::evalString(xmlNode *element)
   }
   else if(!xmlStrcmp(element->name, (const xmlChar *) "lit-tag"))
   {
-    evalStringCache[element] = TransferInstr(ti_lit_tag, 
-                                             tags((const char *) element->properties->children->content), 0);                                            
+    evalStringCache[element] = TransferInstr(ti_lit_tag,
+                                             tags((const char *) element->properties->children->content), 0);
   }
   else if(!xmlStrcmp(element->name, (const xmlChar *) "lit"))
   {
@@ -470,8 +507,8 @@ Transfer::evalString(xmlNode *element)
     {
       if(i->type == XML_ELEMENT_NODE)
       {
-	param = i;
-	break;
+        param = i;
+        break;
       }
     }
 
@@ -490,18 +527,18 @@ Transfer::evalString(xmlNode *element)
     {
       if(!xmlStrcmp(i->name, (const xmlChar *) "side"))
       {
-	side = i->children->content;
+        side = i->children->content;
       }
       else if(!xmlStrcmp(i->name, (const xmlChar *) "part"))
       {
-	part = i->children->content;
+        part = i->children->content;
       }
       else if(!xmlStrcmp(i->name, (const xmlChar *) "pos"))
       {
-	pos = atoi((const char *) i->children->content) - 1;
+        pos = atoi((const char *) i->children->content) - 1;
       }
     }
-      
+
     if(!xmlStrcmp(side, (const xmlChar *) "sl"))
     {
       evalStringCache[element] = TransferInstr(ti_case_of_sl, (const char *) part, pos);
@@ -509,10 +546,10 @@ Transfer::evalString(xmlNode *element)
     else
     {
       evalStringCache[element] = TransferInstr(ti_case_of_tl, (const char *) part, pos);
-    }    
+    }
   }
   else if(!xmlStrcmp(element->name, (const xmlChar *) "concat"))
-  { 
+  {
     string value;
     for(xmlNode *i = element->children; i != NULL; i = i->next)
     {
@@ -528,12 +565,12 @@ Transfer::evalString(xmlNode *element)
     string myword;
     for(xmlNode *i = element->children; i != NULL; i = i->next)
     {
-       if(i->type == XML_ELEMENT_NODE)
-       {
-         myword.append(evalString(i));
-       }
+      if(i->type == XML_ELEMENT_NODE)
+      {
+        myword.append(evalString(i));
+      }
     }
-    
+
     if(myword != "")
     {
       return "^"+myword+"$";
@@ -546,39 +583,39 @@ Transfer::evalString(xmlNode *element)
   else if(!xmlStrcmp(element->name, (const xmlChar *) "mlu"))
   {
     string value;
-     	  
+
     bool first_time = true;
-    
+
     for(xmlNode *i = element->children; i != NULL; i = i->next)
     {
       if(i->type == XML_ELEMENT_NODE)
       {
         string myword;
-	 
+
         for(xmlNode *j = i->children; j != NULL; j = j->next)
         {
           if(j->type == XML_ELEMENT_NODE)
-	  {
+          {
             myword.append(evalString(j));
-	  }
+          }
         }
-	      
-	if(!first_time)
-	{
-	  if(myword != "" && myword[0] != '#')  //'+#' problem
-	  {
-	    value.append("+");
+
+        if(!first_time)
+        {
+          if(myword != "" && myword[0] != '#')  //'+#' problem
+          {
+            value.append("+");
           }
-	}
-	else
-	{
-	  if(myword != "")
-	  {
-	    first_time = false;
+        }
+        else
+        {
+          if(myword != "")
+          {
+            first_time = false;
           }
-	}
-	 
-	value.append(myword);
+        }
+
+        value.append(myword);
       }
     }
 
@@ -615,64 +652,64 @@ Transfer::processOut(xmlNode *localroot)
       {
         if(!xmlStrcmp(i->name, (const xmlChar *) "lu"))
         {
-  	  string myword;
-	  for(xmlNode *j = i->children; j != NULL; j = j->next)
-	  {
-	    if(j->type == XML_ELEMENT_NODE)
-	    {
-	      myword.append(evalString(j));
+          string myword;
+          for(xmlNode *j = i->children; j != NULL; j = j->next)
+          {
+            if(j->type == XML_ELEMENT_NODE)
+            {
+              myword.append(evalString(j));
             }
-	  }
-	  if(myword != "")
-	  {
-  	    fputwc_unlocked(L'^', output);
-   	    fputws_unlocked(UtfConverter::fromUtf8(myword).c_str(), output);
-	    fputwc_unlocked(L'$', output);
+          }
+          if(myword != "")
+          {
+            fputwc_unlocked(L'^', output);
+            fputws_unlocked(UtfConverter::fromUtf8(myword).c_str(), output);
+            fputwc_unlocked(L'$', output);
           }
         }
         else if(!xmlStrcmp(i->name, (const xmlChar *) "mlu"))
         {
-	  fputwc_unlocked('^', output);
-	  bool first_time = true;
-	  for(xmlNode *j = i->children; j != NULL; j = j->next)
-	  {
-	    if(j->type == XML_ELEMENT_NODE)
-	    {
+          fputwc_unlocked('^', output);
+          bool first_time = true;
+          for(xmlNode *j = i->children; j != NULL; j = j->next)
+          {
+            if(j->type == XML_ELEMENT_NODE)
+            {
               string myword;
-	      for(xmlNode *k = j->children; k != NULL; k = k->next)
-	      {
-	        if(k->type == XML_ELEMENT_NODE)
-	        {
+              for(xmlNode *k = j->children; k != NULL; k = k->next)
+              {
+                if(k->type == XML_ELEMENT_NODE)
+                {
                   myword.append(evalString(k));
-	        }
-	      }
-	      
-	      if(!first_time)
-	      {
-	        if(myword != "" && myword[0] != '#')  //'+#' problem
-	        {
-	          fputwc_unlocked(L'+', output);
                 }
-	      }
-	      else
-	      {
-	        if(myword != "")
-	        {
-	          first_time = false;
+              }
+
+              if(!first_time)
+              {
+                if(myword != "" && myword[0] != '#')  //'+#' problem
+                {
+                  fputwc_unlocked(L'+', output);
                 }
-	      }
-	      fputws_unlocked(UtfConverter::fromUtf8(myword).c_str(), output);
-	    }
-	  }
-	  fputwc_unlocked(L'$', output);
+              }
+              else
+              {
+                if(myword != "")
+                {
+                  first_time = false;
+                }
+              }
+              fputws_unlocked(UtfConverter::fromUtf8(myword).c_str(), output);
+            }
+          }
+          fputwc_unlocked(L'$', output);
         }
         else // 'b'
         {
-          fputws_unlocked(UtfConverter::fromUtf8(evalString(i)).c_str(), 
-			  output);
+          fputws_unlocked(UtfConverter::fromUtf8(evalString(i)).c_str(),
+                          output);
         }
       }
-      else 
+      else
       {
         if(!xmlStrcmp(i->name, (const xmlChar *) "chunk"))
         {
@@ -681,7 +718,7 @@ Transfer::processOut(xmlNode *localroot)
         else // 'b'
         {
           fputws_unlocked(UtfConverter::fromUtf8(evalString(i)).c_str(), output);
-        }        
+        }
       }
     }
   }
@@ -757,15 +794,19 @@ Transfer::processChunk(xmlNode *localroot)
       else if(!xmlStrcmp(i->name, (const xmlChar *) "lu"))
       {
         string myword;
+        std::pair<int, string> blankfrom;
         for(xmlNode *j = i->children; j != NULL; j = j->next)
         {
           if(j->type == XML_ELEMENT_NODE)
           {
             myword.append(evalString(j));
+            blankfrom = wordBlankPos(j);
+            cerr <<"blank from "<<blankfrom.first<<":"<<blankfrom.second<<endl;
+            
           }
         }
         if(myword != "")
-        { 
+        {
           result.append("^");
           result.append(myword);
           result.append("$");
