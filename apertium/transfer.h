@@ -42,7 +42,7 @@ using namespace std;
 class Transfer
 {
 private:
-  
+
   Alphabet alphabet;
   MatchExe *me;
   MatchState ms;
@@ -71,11 +71,11 @@ private:
 
   xmlNode *lastrule;
   unsigned int nwords;
-  
+
   map<xmlNode *, TransferInstr> evalStringCache;
 
   enum OutputType{lu,chunk};
-  
+
   OutputType defaultAttrs;
   bool preBilingual;
   bool useBilingual;
@@ -83,7 +83,7 @@ private:
   bool internal_null_flush;
   bool trace;
   string emptyblank;
-  
+
   void copy(Transfer const &o);
   void destroy();
   void readData(FILE *input);
@@ -118,6 +118,8 @@ private:
   string processChunk(xmlNode *localroot);
   string processTags(xmlNode *localroot);
 
+  wstring firstTranslationOfWord() const;
+
   bool beginsWith(string const &str1, string const &str2) const;
   bool endsWith(string const &str1, string const &str2) const;
   string tolower(string const &str) const;
@@ -135,7 +137,7 @@ public:
   ~Transfer();
   Transfer(Transfer const &o);
   Transfer & operator =(Transfer const &o);
-  
+
   void read(string const &transferfile, string const &datafile,
 	    string const &fstfile = "");
   void transfer(FILE *in, FILE *out);

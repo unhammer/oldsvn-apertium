@@ -1842,6 +1842,44 @@ Transfer::transfer_wrapper_null_flush(FILE *in, FILE *out)
   null_flush = true;
 }    
 
+wstring
+Transfer::firstTranslationOfWord() const {
+  wstring tl;
+  int seenSlash = 0;
+  for(wstring::const_iterator it = tmpword[0]->begin(); it != tmpword[0]->end(); it++)
+  {
+    if(seenSlash == 0)
+    {
+      if(*it == L'/')
+      {
+        seenSlash++;
+      }
+      else if(*it == L'\\')
+      {
+        it++;
+      }
+    }
+    else if(seenSlash == 1)
+    {
+      if(*it == L'/')
+      {
+        // reached end of first translation
+        break;
+      }
+      else if(*it == L'\\')
+      {
+        tl.push_back(*it);
+        it++;
+        tl.push_back(*it);
+      }
+      else
+      {
+        tl.push_back(*it);
+      }
+    }
+  }
+  return tl;
+}
 void
 Transfer::transfer(FILE *in, FILE *out)
 {
@@ -1849,31 +1887,31 @@ Transfer::transfer(FILE *in, FILE *out)
   {
     transfer_wrapper_null_flush(in, out);
   }
-  
+
   int last = 0;
 
   output = out;
   ms.init(me->getInitial());
-  
+
   while(true)
   {
     if(ms.size() == 0)
     {
       if(lastrule != NULL)
       {
-	applyRule();
-	input_buffer.setPos(last);
+        applyRule();
+        input_buffer.setPos(last);
       }
       else
       {
-	if(tmpword.size() != 0)
-	{
-	  pair<wstring, int> tr;
-	  if(useBilingual && preBilingual == false)
-	  {
-	    if(isExtended && (*tmpword[0])[0] == L'*')
-	    {
-	      tr = extended.biltransWithQueue((*tmpword[0]).substr(1), false);
+        if(tmpword.size() != 0)
+        {
+          pair<wstring, int> tr;
+          if(useBilingual && preBilingual == false)
+          {
+            if(isExtended && (*tmpword[0])[0] == L'*')
+            {
+              tr = extended.biltransWithQueue((*tmpword[0]).substr(1), false);
               if(tr.first[0] == L'@')
               {
                 tr.first[0] = L'*';
@@ -1885,66 +1923,26 @@ Transfer::transfer(FILE *in, FILE *out)
             }
             else
             {
-	      tr = fstp.biltransWithQueue(*tmpword[0], false);
+              tr = fstp.biltransWithQueue(*tmpword[0], false);
             }
           }
           else if(preBilingual)
           {
-            wstring sl;
-            wstring tl;
-            int seenSlash = 0;
-            for(wstring::const_iterator it = tmpword[0]->begin(); it != tmpword[0]->end(); it++) 
-            {
-              if(*it == L'\\')
-              {
-                if(seenSlash == 0)
-                {
-                  sl.push_back(*it);
-                  it++;
-                  sl.push_back(*it);
-                }
-                else
-                {
-                  tl.push_back(*it);
-                  it++;
-                  tl.push_back(*it);
-                }
-                continue;
-              }
-              else if(*it == L'/') 
-              {
-                seenSlash++;
-                continue;
-              }
-              if(seenSlash == 0)
-              {
-                sl.push_back(*it);
-              }
-              else if(seenSlash == 1)
-              {
-                tl.push_back(*it);
-              }
-              else if(seenSlash > 1)
-              {
-                break;
-              }
-            }
-            //tmpword[0]->assign(sl); 
+            wstring tl = firstTranslationOfWord();
             tr = pair<wstring, int>(tl, false);
-            //wcerr << L"pb: " << *tmpword[0] << L" :: " << sl << L" >> " << tl << endl ; 
           }
           else
           {
             tr = pair<wstring, int>(*tmpword[0], 0);
           }
-          
-	  if(tr.first.size() != 0)
-	  {
-	    if(defaultAttrs == lu)
-	    {
-	      fputwc_unlocked(L'^', output);
-	      fputws_unlocked(tr.first.c_str(), output);
-	      fputwc_unlocked(L'$', output);
+
+          if(tr.first.size() != 0)
+          {
+            if(defaultAttrs == lu)
+            {
+              fputwc_unlocked(L'^', output);
+              fputws_unlocked(tr.first.c_str(), output);
+              fputwc_unlocked(L'$', output);
             }
             else
             {
@@ -1953,32 +1951,32 @@ Transfer::transfer(FILE *in, FILE *out)
                 fputws_unlocked(L"^unknown<unknown>{^", output);
               }
               else
-              {                
-	        fputws_unlocked(L"^default<default>{^", output);
-              }	        
-	      fputws_unlocked(tr.first.c_str(), output);
-	      fputws_unlocked(L"$}$", output);
+              {
+                fputws_unlocked(L"^default<default>{^", output);
+              }
+              fputws_unlocked(tr.first.c_str(), output);
+              fputws_unlocked(L"$}$", output);
             }
-	  }
-	  tmpword.clear();
-	  input_buffer.setPos(last);
-	  input_buffer.next();       
-	  last = input_buffer.getPos();
-	  ms.init(me->getInitial());
-	}
-	else if(tmpblank.size() != 0)
-	{
-	  fputws_unlocked(tmpblank[0]->c_str(), output);
-	  tmpblank.clear();
-	  last = input_buffer.getPos();
-	  ms.init(me->getInitial());
-	}
+          }
+          tmpword.clear();
+          input_buffer.setPos(last);
+          input_buffer.next();
+          last = input_buffer.getPos();
+          ms.init(me->getInitial());
+        }
+        else if(tmpblank.size() != 0)
+        {
+          fputws_unlocked(tmpblank[0]->c_str(), output);
+          tmpblank.clear();
+          last = input_buffer.getPos();
+          ms.init(me->getInitial());
+        }
       }
     }
     int val = ms.classifyFinals(me->getFinals());
     if(val != -1)
     {
-      lastrule = rule_map[val-1];      
+      lastrule = rule_map[val-1];
       last = input_buffer.getPos();
 
       if(trace)
@@ -1997,35 +1995,35 @@ Transfer::transfer(FILE *in, FILE *out)
     }
 
     TransferToken &current = readToken(in);
-   
+
     switch(current.getType())
     {
       case tt_word:
-	applyWord(current.getContent());
+        applyWord(current.getContent());
         tmpword.push_back(&current.getContent());
-	break;
+        break;
 
       case tt_blank:
-	ms.step(L' ');
-	tmpblank.push_back(&current.getContent());
-	break;
+        ms.step(L' ');
+        tmpblank.push_back(&current.getContent());
+        break;
 
       case tt_eof:
-	if(tmpword.size() != 0)
-	{
-	  tmpblank.push_back(&current.getContent());
-	  ms.clear();
-	}
-	else
-	{
-	  fputws_unlocked(current.getContent().c_str(), output);
-	  return;
-	}
-	break;
+        if(tmpword.size() != 0)
+        {
+          tmpblank.push_back(&current.getContent());
+          ms.clear();
+        }
+        else
+        {
+          fputws_unlocked(current.getContent().c_str(), output);
+          return;
+        }
+        break;
 
       default:
-	cerr << "Error: Unknown input token." << endl;
-	return;
+        cerr << "Error: Unknown input token." << endl;
+        return;
     }
   }
 }
