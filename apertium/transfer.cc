@@ -291,8 +291,16 @@ Transfer::checkIndex(xmlNode *element, int index, int limit)
 
 
 std::pair<int, string>
-Transfer::wordBlankPos(xmlNode *element, string best_so_far)
+Transfer::wordBlankPos(xmlNode *element, std::pair<int, string> best_so_far)
 {
+  if (best_so_far != NULL &&
+      (best_so_far.second == "lu" ||
+       best_so_far.second == "whole" ||
+       best_so_far.second == "lem" ||
+       best_so_far.second == "lemh" ||
+       best_so_far.second == "lemq")) {
+    return best_so_far;
+  }
   map<xmlNode *, TransferInstr>::iterator it;
   it = evalStringCache.find(element);
   if(it == evalStringCache.end())
@@ -659,7 +667,7 @@ Transfer::processOut(xmlNode *localroot)
             if(j->type == XML_ELEMENT_NODE)
             {
               myword.append(evalString(j));
-              blankfrom = wordBlankPos(j, blankfrom.second);
+              blankfrom = wordBlankPos(j, blankfrom);
               cerr <<"blank from "<<blankfrom.first<<":"<<blankfrom.second<<endl;
             }
           }
@@ -803,7 +811,7 @@ Transfer::processChunk(xmlNode *localroot)
           if(j->type == XML_ELEMENT_NODE)
           {
             myword.append(evalString(j));
-            blankfrom = wordBlankPos(j);
+            blankfrom = wordBlankPos(j, blankfrom);
             cerr <<"blank from "<<blankfrom.first<<":"<<blankfrom.second<<endl;
             
           }

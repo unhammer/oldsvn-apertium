@@ -113,9 +113,9 @@ private:
   bool processIn(xmlNode *localroot);
   void processRule(xmlNode *localroot);
   /**
-   * Find the position to use as the wordbound blank of this node.
+   * Find the position to use as the wordbound blank of this node. 
    */
-  std::pair<int, string> wordBlankPos(xmlNode *localroot);
+  std::pair<int, string> wordBlankPos(xmlNode *localroot, std::pair<int, string> best_so_far);
   string evalString(xmlNode *localroot);
   void processInstruction(xmlNode *localroot);
   void processChoose(xmlNode *localroot);
