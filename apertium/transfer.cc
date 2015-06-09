@@ -661,7 +661,8 @@ Transfer::processOut(xmlNode *localroot)
         if(!xmlStrcmp(i->name, (const xmlChar *) "lu"))
         {
           string myword;
-          std::pair<int, string> blankfrom;
+          // TODO: get possible lu-attrib
+          std::pair<int, string> blankfrom = std::make_pair<int, string>(0, NULL);
           for(xmlNode *j = i->children; j != NULL; j = j->next)
           {
             if(j->type == XML_ELEMENT_NODE)
