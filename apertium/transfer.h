@@ -62,6 +62,7 @@ private:
   std::vector<wstring *> tmpword;
   std::vector<wstring *> tmpwordblank;
   std::vector<wstring *> tmpfreeblank; /* TODO stack */
+  std::vector<wstring *> tmpsuperblank;
 
   FSTProcessor fstp;
   FSTProcessor extended;
@@ -131,12 +132,11 @@ private:
   bool endsWith(string const &str1, string const &str2) const;
   string tolower(string const &str) const;
   string tags(string const &str) const;
-  wstring consumeWord(FILE *in);
   wstring readBlank(FILE *in);
   wstring readUntil(FILE *in, int const symbol) const;
   void applyWord(wstring const &word_str);
   void applyRule();
-  bool readWord(FILE *in);
+  bool consumeWord(FILE *in);
   TransferToken & readToken(FILE *in);
   bool checkIndex(xmlNode *element, int index, int limit);
   void transfer_wrapper_null_flush(FILE *in, FILE *out);

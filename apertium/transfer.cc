@@ -1818,8 +1818,8 @@ Transfer::readToken(FILE *in)
     {
       if(content != L"")
       {
-        fungetwc_unlocked(in);
-        return input_buffer.add(TransferToken(content, tt_freeblank))
+        ungetwc(L'[', in);
+        return input_buffer.add(TransferToken(content, tt_freeblank));
       }
       content += L'[';
       while(true)
@@ -2071,13 +2071,13 @@ Transfer::transfer(FILE *in, FILE *out)
 bool
 Transfer::consumeWord(FILE *in)
 {
-  TransferToken &current;
-  wstring supers, wordblank, freeblank;
+  wstring supers;
+  wstring *wordblank, *freeblank;
   enum blank_state { init, seen_blank };
   blank_state state = init;
 
   while(true) {
-    current = readToken(in);
+    TransferToken &current = readToken(in);
 
     switch(current.getType())
     {
@@ -2095,23 +2095,23 @@ Transfer::consumeWord(FILE *in)
             // TODO: putback word instead? or just push to tmpword?
             tmpwordblank.push_back(wordblank);
             tmpfreeblank.push_back(freeblank);
-            tmpsuperblank.push_back(supers);
+            tmpsuperblank.push_back(&supers);
             break;
         }
         return true;
 
       case tt_superblank:
-        supers += freeblank;
-        freeblank = "";           // this freeblank should not be bound to the following word
-        supers += &current.getContent();
-        wordblank = "";           // wordblanks followed by non-words are ignored
+        supers += *freeblank;
+        *freeblank = L"";
+        supers += current.getContent();
+        *wordblank = L"";
         state = seen_blank;
         continue;
 
       case tt_freeblank:
-        supers += freeblank;
+        supers += *freeblank;
         freeblank = &current.getContent();
-        wordblank = "";           // wordblanks followed by non-words are ignored
+        *wordblank = L"";
         state = seen_blank;
         continue;
 
@@ -2123,11 +2123,19 @@ Transfer::consumeWord(FILE *in)
       case tt_eof:
         if(tmpword.size() != 0)
         {
-          tmpsuperblank.push_back(&current.getContent());
+          supers += *freeblank;
+          *freeblank = L"";
+          supers += current.getContent();
+          *wordblank = L"";
+          tmpwordblank.push_back(wordblank);
+          tmpfreeblank.push_back(freeblank);
+          tmpsuperblank.push_back(&supers);
           ms.clear();
+          return true;
         }
         else
         {
+          fputws_unlocked(freeblank->c_str(), output);
           fputws_unlocked(current.getContent().c_str(), output);
           return false;
         }
