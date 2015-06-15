@@ -1521,7 +1521,7 @@ Postchunk::readToken(FILE *in)
     else if(val == L'^')
     {
       inword = true;
-      return input_buffer.add(TransferToken(content, tt_blank));
+      return input_buffer.add(TransferToken(content, tt_superblank));
     }
     else
     {
@@ -1621,7 +1621,7 @@ Postchunk::postchunk(FILE *in, FILE *out)
         tmpword.push_back(&current.getContent());
 	break;
 
-      case tt_blank:
+      case tt_superblank:
 	ms.step(L' ');
 	tmpblank.push_back(&current.getContent());
 	break;

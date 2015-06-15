@@ -131,7 +131,7 @@ private:
   bool endsWith(string const &str1, string const &str2) const;
   string tolower(string const &str) const;
   string tags(string const &str) const;
-  wstring readWord(FILE *in);
+  wstring consumeWord(FILE *in);
   wstring readBlank(FILE *in);
   wstring readUntil(FILE *in, int const symbol) const;
   void applyWord(wstring const &word_str);
