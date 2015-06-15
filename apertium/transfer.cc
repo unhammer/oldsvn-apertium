@@ -290,15 +290,14 @@ Transfer::checkIndex(xmlNode *element, int index, int limit)
 }
 
 
-std::pair<int, string>
-Transfer::wordBlankPos(xmlNode *element, std::pair<int, string> best_so_far)
+Transfer::best_blank_pos
+Transfer::wordBlankPos(xmlNode *element, best_blank_pos best_so_far)
 {
-  if (best_so_far != NULL &&
-      (best_so_far.second == "lu" ||
+  if (best_so_far.second == "lu" ||
        best_so_far.second == "whole" ||
        best_so_far.second == "lem" ||
        best_so_far.second == "lemh" ||
-       best_so_far.second == "lemq")) {
+       best_so_far.second == "lemq") {
     return best_so_far;
   }
   map<xmlNode *, TransferInstr>::iterator it;
@@ -662,7 +661,7 @@ Transfer::processOut(xmlNode *localroot)
         {
           string myword;
           // TODO: get possible lu-attrib
-          std::pair<int, string> blankfrom = std::make_pair<int, string>(0, NULL);
+          best_blank_pos blankfrom = std::make_pair<int, string>(-1, NULL);
           for(xmlNode *j = i->children; j != NULL; j = j->next)
           {
             if(j->type == XML_ELEMENT_NODE)
@@ -806,7 +805,7 @@ Transfer::processChunk(xmlNode *localroot)
       else if(!xmlStrcmp(i->name, (const xmlChar *) "lu"))
       {
         string myword;
-        std::pair<int, string> blankfrom;
+        best_blank_pos blankfrom;
         for(xmlNode *j = i->children; j != NULL; j = j->next)
         {
           if(j->type == XML_ELEMENT_NODE)
@@ -1811,30 +1810,37 @@ Transfer::readToken(FILE *in)
       return input_buffer.add(TransferToken(content, tt_eof));
     }
     if(val == '\\')
-    {  
+    {
       content += L'\\';
       content += (wchar_t) fgetwc_unlocked(in);
     }
     else if(val == L'[')
     {
+      if(content != L"")
+      {
+        fungetwc_unlocked(in);
+        return input_buffer.add(TransferToken(content, tt_freeblank))
+      }
       content += L'[';
       while(true)
       {
-	int val2 = fgetwc_unlocked(in);
-	if(val2 == L'\\')
-	{
-	  content += L'\\';
-	  content += wchar_t(fgetwc_unlocked(in));
-	}
-	else if(val2 == L']')
-	{
-	  content += L']';
-	  break;
-	}
-	else
-	{
-	  content += wchar_t(val2);
-	}
+        int val2 = fgetwc_unlocked(in);
+        if(val2 == L'\\')
+        {
+          content += L'\\';
+          content += wchar_t(fgetwc_unlocked(in));
+        }
+        else if(val2 == L']')
+        {
+          content += L']';
+          return input_buffer.add(
+            TransferToken(content, (val == L'}') ? tt_wordblank : tt_superblank));
+        }
+        else
+        {
+          content += wchar_t(val2);
+        }
+        val = val2;
       }
     }
     else if(val == L'$')
@@ -1843,7 +1849,7 @@ Transfer::readToken(FILE *in)
     }
     else if(val == L'^')
     {
-      return input_buffer.add(TransferToken(content, tt_blank));
+      return input_buffer.add(TransferToken(content, tt_freeblank));
     }
     else if(val == L'\0' && null_flush)
     {
@@ -1933,6 +1939,7 @@ Transfer::firstTranslationOfWord() const {
   }
   return tl;
 }
+
 void
 Transfer::transfer(FILE *in, FILE *out)
 {
@@ -1941,6 +1948,7 @@ Transfer::transfer(FILE *in, FILE *out)
     transfer_wrapper_null_flush(in, out);
   }
 
+  std::vector<wstring *> tmpblank;
   int last = 0;
 
   output = out;
@@ -1952,6 +1960,13 @@ Transfer::transfer(FILE *in, FILE *out)
     {
       if(lastrule != NULL)
       {
+        for(std::vector<wstring *>::const_iterator it = tmpblank.begin(); it != tmpblank.end(); it++) {
+          // fputws_unlocked(it.c_str(), output);
+          wcerr <<L"tmpblank"<<(**it)<<endl;
+          if((*it)[0] == L"/") wcerr <<L"/"<<endl;
+          tmpwordblank.push_back((*it));
+        }
+        tmpblank.clear();
         applyRule();
         input_buffer.setPos(last);
       }
@@ -2047,18 +2062,42 @@ Transfer::transfer(FILE *in, FILE *out)
       }
     }
 
-    TransferToken &current = readToken(in);
+    if(!readWord(in)) {
+      return;
+    }
+  }
+}
 
+bool
+Transfer::readWord(FILE *in)
+{
+  TransferToken &current;
+  wstring superblank, wordblank, freeblank;
+
+  while(true) {
+    current = readToken(in);
     switch(current.getType())
     {
       case tt_word:
+        if(superblank != L"")
         applyWord(current.getContent());
         tmpword.push_back(&current.getContent());
         break;
 
-      case tt_blank:
-        ms.step(L' ');
-        tmpblank.push_back(&current.getContent());
+      case tt_superblank:
+        superblank += freeblank + &current.getContent();
+        freeblank = L"";
+        wordblank = L"";
+        break;
+
+      case tt_wordblank:
+        // ms.step(L' ');
+        // tmpblank.push_back(&current.getContent());
+        wordblank = &current.getContent();
+        break;
+
+      case tt_freeblank:
+        freeblank = &current.getContent();
         break;
 
       case tt_eof:
@@ -2070,16 +2109,17 @@ Transfer::transfer(FILE *in, FILE *out)
         else
         {
           fputws_unlocked(current.getContent().c_str(), output);
-          return;
+          return false;
         }
         break;
 
       default:
         cerr << "Error: Unknown input token." << endl;
-        return;
+        return false;
     }
   }
 }
+
 
 void
 Transfer::applyRule()
@@ -2106,7 +2146,7 @@ Transfer::applyRule()
     }
     else
     {
-      blank[i-1] = new string(UtfConverter::toUtf8(*tmpblank[i-1]));
+      blank[i-1] = new string(UtfConverter::toUtf8(*tmpwordblank[i-1]));
     }
     
     pair<wstring, int> tr;
@@ -2191,7 +2231,7 @@ Transfer::applyRule()
   word = NULL;
   blank = NULL;
   tmpword.clear();
-  tmpblank.clear();
+  tmpwordblank.clear();
   ms.init(me->getInitial());
 }
 
@@ -2206,36 +2246,36 @@ Transfer::applyWord(wstring const &word_str)
     {
       case L'\\':
         i++;
-	ms.step(towlower(word_str[i]), any_char);
-	break;
+        ms.step(towlower(word_str[i]), any_char);
+        break;
 
       case L'/':
         i = limit;
         break;
 
       case L'<':
-	for(unsigned int j = i+1; j != limit; j++)
-	{
-	  if(word_str[j] == L'>')
-	  {
-	    int symbol = alphabet(word_str.substr(i, j-i+1));
-	    if(symbol)
-	    {
-	      ms.step(symbol, any_tag);
-	    }
-	    else
-	    {
-	      ms.step(any_tag);
-	    }
-	    i = j;
-	    break;
-	  }
-	}
-	break;
+        for(unsigned int j = i+1; j != limit; j++)
+        {
+          if(word_str[j] == L'>')
+          {
+            int symbol = alphabet(word_str.substr(i, j-i+1));
+            if(symbol)
+            {
+              ms.step(symbol, any_tag);
+            }
+            else
+            {
+              ms.step(any_tag);
+            }
+            i = j;
+            break;
+          }
+        }
+        break;
 	
       default:
-	ms.step(towlower(word_str[i]), any_char);
-	break;
+        ms.step(towlower(word_str[i]), any_char);
+        break;
     }
   }
   ms.step(L'$');

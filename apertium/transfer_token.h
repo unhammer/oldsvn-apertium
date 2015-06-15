@@ -27,7 +27,9 @@ enum TransferTokenType
 {
   tt_eof,
   tt_word,
-  tt_blank
+  tt_superblank,
+  tt_wordblank,
+  tt_freeblank
 };
 
 

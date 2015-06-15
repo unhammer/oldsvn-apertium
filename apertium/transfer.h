@@ -59,8 +59,9 @@ private:
   string **blank;
   int lword, lblank;
   Buffer<TransferToken> input_buffer;
-  vector<wstring *> tmpword;
-  vector<wstring *> tmpblank;
+  std::vector<wstring *> tmpword;
+  std::vector<wstring *> tmpwordblank;
+  std::vector<wstring *> tmpfreeblank; /* TODO stack */
 
   FSTProcessor fstp;
   FSTProcessor extended;
@@ -112,10 +113,12 @@ private:
   bool processNot(xmlNode *localroot);
   bool processIn(xmlNode *localroot);
   void processRule(xmlNode *localroot);
+  typedef std::pair<int, string> best_blank_pos;
   /**
-   * Find the position to use as the wordbound blank of this node. 
+   * Try to improve the current best guess for the position that
+   * becomes the wordbound blank of this node.
    */
-  std::pair<int, string> wordBlankPos(xmlNode *localroot, std::pair<int, string> best_so_far);
+  best_blank_pos wordBlankPos(xmlNode *localroot, best_blank_pos best_so_far);
   string evalString(xmlNode *localroot);
   void processInstruction(xmlNode *localroot);
   void processChoose(xmlNode *localroot);
@@ -133,6 +136,7 @@ private:
   wstring readUntil(FILE *in, int const symbol) const;
   void applyWord(wstring const &word_str);
   void applyRule();
+  bool readWord(FILE *in);
   TransferToken & readToken(FILE *in);
   bool checkIndex(xmlNode *element, int index, int limit);
   void transfer_wrapper_null_flush(FILE *in, FILE *out);
