@@ -2071,8 +2071,7 @@ Transfer::transfer(FILE *in, FILE *out)
 bool
 Transfer::consumeWord(FILE *in)
 {
-  wstring supers;
-  wstring *wordblank, *freeblank;
+  wstring supers, wordblank, freeblank;
   enum blank_state { init, seen_blank };
   blank_state state = init;
 
@@ -2093,49 +2092,49 @@ Transfer::consumeWord(FILE *in)
             applyWord(current.getContent());
             tmpword.push_back(&current.getContent());
             // TODO: putback word instead? or just push to tmpword?
-            tmpwordblank.push_back(wordblank);
-            tmpfreeblank.push_back(freeblank);
+            tmpwordblank.push_back(&wordblank);
+            tmpfreeblank.push_back(&freeblank);
             tmpsuperblank.push_back(&supers);
             break;
         }
         return true;
 
       case tt_superblank:
-        supers += *freeblank;
-        *freeblank = L"";
+        supers += freeblank;
+        freeblank = L"";
         supers += current.getContent();
-        *wordblank = L"";
+        wordblank = L"";
         state = seen_blank;
         continue;
 
       case tt_freeblank:
-        supers += *freeblank;
-        freeblank = &current.getContent();
-        *wordblank = L"";
+        supers += freeblank;
+        freeblank = current.getContent();
+        wordblank = L"";
         state = seen_blank;
         continue;
 
       case tt_wordblank:
-        wordblank = &current.getContent();
+        wordblank = current.getContent();
         state = seen_blank;
         continue;
 
       case tt_eof:
         if(tmpword.size() != 0)
         {
-          supers += *freeblank;
-          *freeblank = L"";
+          supers += freeblank;
+          freeblank = L"";
           supers += current.getContent();
-          *wordblank = L"";
-          tmpwordblank.push_back(wordblank);
-          tmpfreeblank.push_back(freeblank);
+          wordblank = L"";
+          tmpwordblank.push_back(&wordblank);
+          tmpfreeblank.push_back(&freeblank);
           tmpsuperblank.push_back(&supers);
           ms.clear();
           return true;
         }
         else
         {
-          fputws_unlocked(freeblank->c_str(), output);
+          fputws_unlocked(freeblank.c_str(), output);
           fputws_unlocked(current.getContent().c_str(), output);
           return false;
         }
