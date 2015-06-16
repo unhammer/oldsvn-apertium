@@ -393,15 +393,21 @@ Transfer::evalString(xmlNode *element)
         return ti.getContent();
 
       case ti_b:
-        return " ";
-          // if(freeblank.empty()) {
-          //   return " ";
-          // }
-          // else {
-          //   string *blank = freeblank.front();
-          //   freeblank.pop_front();
-          //   return (*blank).c_str();
-          // }
+        // return " ";
+        if(freeblank.empty()) {
+          return " ";
+        }
+        else {
+          wstring blank = freeblank.front();
+          freeblank.pop_front();
+          if(blank.empty())     // TODO: or?
+          {
+            return " ";
+          }
+          else {
+            return UtfConverter::toUtf8(blank).c_str();
+          }
+        }
 
       case ti_get_case_from:
         if(checkIndex(element, ti.getPos(), lword))
