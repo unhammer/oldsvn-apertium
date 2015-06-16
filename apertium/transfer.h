@@ -56,14 +56,14 @@ private:
   xmlDoc *doc;
   xmlNode *root_element;
   TransferWord **word;
-  string **wordblank;
-  string **freeblank;
+  string **format;              /* TODO: make part of TransferWord? */
+  std::deque<wstring> freeblank;
   int lword;
   Buffer<TransferToken> input_buffer;
-  std::vector<wstring *> tmpword;
-  std::vector<wstring> tmpwordblank;
-  std::deque<wstring> tmpfreeblank;
-  std::vector<wstring> tmpsuperblank;
+  std::vector<TransferToken *> tmpword;
+  /* std::vector<wstring> tmpwordblank; */
+  /* std::deque<wstring> tmpfreeblank; */
+  /* std::vector<wstring> tmpsuperblank; */
 
   FSTProcessor fstp;
   FSTProcessor extended;
@@ -136,12 +136,8 @@ private:
   wstring readUntil(FILE *in, int const symbol) const;
   void applyWord(wstring const &word_str);
   void applyRule(xmlNode *rule);
+  void applyDefaultRule(wstring const &word);
 
-  /**
-   * Wrapper around readToken, reads up until the next word or EOF,
-   * adding blanks to tmpsuperblank etc.
-   */
-  TransferToken & readWord(FILE *in);
   TransferToken & readToken(FILE *in);
   bool checkIndex(xmlNode *element, int index, int limit);
   void transfer_wrapper_null_flush(FILE *in, FILE *out);
