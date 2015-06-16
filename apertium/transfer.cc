@@ -978,7 +978,8 @@ Transfer::processLet(xmlNode *localroot)
   else if(!xmlStrcmp(leftSide->name, (const xmlChar *) "clip"))
   {
     int pos = 0;
-    xmlChar *part = NULL, *side = NULL, *as = NULL;
+    xmlChar *part = NULL, *side = NULL // , *as = NULL
+      ;
     bool queue = true;
 
     for(xmlAttr *i = leftSide->properties; i != NULL; i = i->next)
@@ -1002,10 +1003,10 @@ Transfer::processLet(xmlNode *localroot)
           queue = false;
         }
       }
-      else if(!xmlStrcmp(i->name, (const xmlChar *) "link-to"))
-      {
-        as = i->children->content;
-      }
+      // else if(!xmlStrcmp(i->name, (const xmlChar *) "link-to"))
+      // {
+      //   as = i->children->content;
+      // }
     }
 
     if(!xmlStrcmp(side, (const xmlChar *) "tl"))
@@ -1067,7 +1068,8 @@ Transfer::processModifyCase(xmlNode *localroot)
   if(leftSide->name != NULL && !xmlStrcmp(leftSide->name, (const xmlChar *) "clip"))
   {
     int pos = 0;
-    xmlChar *part = NULL, *side = NULL, *as = NULL;
+    xmlChar *part = NULL, *side = NULL // , *as = NULL
+      ;
     bool queue = true;
 
     for(xmlAttr *i = leftSide->properties; i != NULL; i = i->next)
@@ -1091,10 +1093,10 @@ Transfer::processModifyCase(xmlNode *localroot)
           queue = false;
         }
       }
-      else if(!xmlStrcmp(i->name, (const xmlChar *) "link-to"))
-      {
-        as = i->children->content;
-      }
+      // else if(!xmlStrcmp(i->name, (const xmlChar *) "link-to"))
+      // {
+      //   as = i->children->content;
+      // }
     }
     if(!xmlStrcmp(side, (const xmlChar *) "sl"))
     {
