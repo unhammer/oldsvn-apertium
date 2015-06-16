@@ -56,13 +56,13 @@ private:
   xmlDoc *doc;
   xmlNode *root_element;
   TransferWord **word;
-  string **blank;
-  int lword, lblank;
+  string **wordblank;
+  int lword;
   Buffer<TransferToken> input_buffer;
   std::vector<wstring *> tmpword;
-  std::vector<wstring *> tmpwordblank;
-  std::vector<wstring *> tmpfreeblank; /* TODO stack */
-  std::vector<wstring *> tmpsuperblank;
+  std::vector<wstring> tmpwordblank;
+  std::deque<wstring> tmpfreeblank;
+  std::vector<wstring> tmpsuperblank;
 
   FSTProcessor fstp;
   FSTProcessor extended;
@@ -126,7 +126,7 @@ private:
   string processChunk(xmlNode *localroot);
   string processTags(xmlNode *localroot);
 
-  wstring firstTranslationOfWord() const;
+  wstring firstTranslationOfWord(wstring const &word) const;
 
   bool beginsWith(string const &str1, string const &str2) const;
   bool endsWith(string const &str1, string const &str2) const;
@@ -136,7 +136,12 @@ private:
   wstring readUntil(FILE *in, int const symbol) const;
   void applyWord(wstring const &word_str);
   void applyRule();
-  bool consumeWord(FILE *in);
+
+  /**
+   * Wrapper around readToken, reads up until the next word or EOF,
+   * adding blanks to tmpsuperblank etc.
+   */
+  TransferToken & readWord(FILE *in);
   TransferToken & readToken(FILE *in);
   bool checkIndex(xmlNode *element, int index, int limit);
   void transfer_wrapper_null_flush(FILE *in, FILE *out);

@@ -394,15 +394,17 @@ Transfer::evalString(xmlNode *element)
         return ti.getContent();
 
       case ti_b:
-        if(checkIndex(element, ti.getPos(), lblank))
-        {
-          if(ti.getPos() >= 0)
-          {
-            return !blank?"":*(blank[ti.getPos()]);
+          if(tmpfreeblank.empty()) {
+            return " ";
           }
-          return " ";
-        }
-        break;
+          else {
+            wstring blank = tmpfreeblank.front();
+            tmpfreeblank.pop_front();
+            wcerr << blank<<endl;
+            // TODO
+            // return (*blank).c_str();
+            return " ";
+          }
 
       case ti_get_case_from:
         if(checkIndex(element, ti.getPos(), lword))
@@ -673,6 +675,7 @@ Transfer::processOut(xmlNode *localroot)
           }
           if(myword != "")
           {
+            fputws_unlocked(UtfConverter::fromUtf8(*wordblank[blankfrom.first]).c_str(), output);
             fputwc_unlocked(L'^', output);
             fputws_unlocked(UtfConverter::fromUtf8(myword).c_str(), output);
             fputwc_unlocked(L'$', output);
@@ -1152,7 +1155,7 @@ Transfer::processCallMacro(xmlNode *localroot)
       myword[idx] = word[pos];
       if(idx-1 >= 0)
       {
-        myblank[idx-1] = blank[lastpos];
+        myblank[idx-1] = wordblank[lastpos];
       }
       idx++;
       lastpos = pos;
@@ -1160,7 +1163,7 @@ Transfer::processCallMacro(xmlNode *localroot)
   }
 
   swap(myword, word);
-  swap(myblank, blank);
+  swap(myblank, wordblank);
   swap(npar, lword);
 
   for(xmlNode *i = macro->children; i != NULL; i = i->next)
@@ -1172,7 +1175,7 @@ Transfer::processCallMacro(xmlNode *localroot)
   }
 
   swap(myword, word);
-  swap(myblank, blank);
+  swap(myblank, wordblank);
   swap(npar, lword);
 
   if(myword)
@@ -1902,10 +1905,11 @@ Transfer::transfer_wrapper_null_flush(FILE *in, FILE *out)
 }
 
 wstring
-Transfer::firstTranslationOfWord() const {
+Transfer::firstTranslationOfWord(wstring const &word) const
+{
   wstring tl;
   int seenSlash = 0;
-  for(wstring::const_iterator it = tmpword[0]->begin(); it != tmpword[0]->end(); it++)
+  for(wstring::const_iterator it = word.begin(); it != word.end(); it++)
   {
     if(seenSlash == 0)
     {
@@ -1948,104 +1952,110 @@ Transfer::transfer(FILE *in, FILE *out)
     transfer_wrapper_null_flush(in, out);
   }
 
-  std::vector<wstring *> tmpblank;
-  int last = 0;
+  int last_out = 0;   // the position in input_buffer that we last printed
 
   output = out;
   ms.init(me->getInitial());
 
   while(true)
   {
+    // wcerr <<L"last_out="<<last_out<<endl;
     if(ms.size() == 0)
     {
+      // Not possible to match a longer sequence -- if we've seen a match, use that, otherwise print _the first_ and try again from that point
+      wcerr <<L"ms.size==0"<<endl;
+
       if(lastrule != NULL)
       {
-        for(std::vector<wstring *>::const_iterator it = tmpblank.begin(); it != tmpblank.end(); it++) {
-          // fputws_unlocked(it.c_str(), output);
-          wcerr <<L"tmpblank"<<(**it)<<endl;
-          if((*it)[0] == L"/") wcerr <<L"/"<<endl;
-          tmpwordblank.push_back((*it));
+        wcerr <<L"rule!"<<endl;
+        for(std::vector<wstring>::const_iterator it = tmpsuperblank.begin(); it != tmpsuperblank.end(); it++) {
+          fputws_unlocked((it)[0].c_str(), output);
         }
-        tmpblank.clear();
+        tmpsuperblank.clear();
         applyRule();
-        input_buffer.setPos(last);
+        for(std::deque<wstring>::const_iterator it = tmpfreeblank.begin(); it != tmpfreeblank.end(); it++) {
+          fputws_unlocked((it)[0].c_str(), output);
+        }
+        tmpfreeblank.clear();
+        input_buffer.setPos(last_out);
       }
-      else
+      else if(tmpword.size() != 0)
       {
-        if(tmpword.size() != 0)
+        // wcerr << L"no rule, superblanksize: "<<tmpsuperblank.size()<<L" wordsize:"<<tmpword.size()<<endl;
+        pair<wstring, int> tr;
+        if(useBilingual && preBilingual == false)
         {
-          pair<wstring, int> tr;
-          if(useBilingual && preBilingual == false)
+          if(isExtended && (*tmpword[0])[0] == L'*')
           {
-            if(isExtended && (*tmpword[0])[0] == L'*')
+            tr = extended.biltransWithQueue((*tmpword[0]).substr(1), false);
+            if(tr.first[0] == L'@')
             {
-              tr = extended.biltransWithQueue((*tmpword[0]).substr(1), false);
-              if(tr.first[0] == L'@')
-              {
-                tr.first[0] = L'*';
-              }
-              else
-              {
-                tr.first = L"%" + tr.first;
-              }
+              tr.first[0] = L'*';
             }
             else
             {
-              tr = fstp.biltransWithQueue(*tmpword[0], false);
+              tr.first = L"%" + tr.first;
             }
-          }
-          else if(preBilingual)
-          {
-            wstring tl = firstTranslationOfWord();
-            tr = pair<wstring, int>(tl, false);
           }
           else
           {
-            tr = pair<wstring, int>(*tmpword[0], 0);
+            tr = fstp.biltransWithQueue(*tmpword[0], false);
           }
+        }
+        else if(preBilingual)
+        {
+          wstring tl = firstTranslationOfWord(*tmpword[0]);
+          tr = pair<wstring, int>(tl, false);
+        }
+        else
+        {
+          tr = pair<wstring, int>(*tmpword[0], 0);
+        }
 
-          if(tr.first.size() != 0)
+        if(tr.first.size() != 0)
+        {
+          if(defaultAttrs == lu)
           {
-            if(defaultAttrs == lu)
+            fputwc_unlocked(L'^', output);
+            fputws_unlocked(tr.first.c_str(), output);
+            fputwc_unlocked(L'$', output);
+          }
+          else
+          {
+            if(tr.first[0] == '*')
             {
-              fputwc_unlocked(L'^', output);
-              fputws_unlocked(tr.first.c_str(), output);
-              fputwc_unlocked(L'$', output);
+              fputws_unlocked(L"^unknown<unknown>{^", output);
             }
             else
             {
-              if(tr.first[0] == '*')
-              {
-                fputws_unlocked(L"^unknown<unknown>{^", output);
-              }
-              else
-              {
-                fputws_unlocked(L"^default<default>{^", output);
-              }
-              fputws_unlocked(tr.first.c_str(), output);
-              fputws_unlocked(L"$}$", output);
+              fputws_unlocked(L"^default<default>{^", output);
             }
+            fputws_unlocked(tr.first.c_str(), output);
+            fputws_unlocked(L"$}$", output);
           }
-          tmpword.clear();
-          input_buffer.setPos(last);
-          input_buffer.next();
-          last = input_buffer.getPos();
-          ms.init(me->getInitial());
         }
-        else if(tmpblank.size() != 0)
-        {
-          fputws_unlocked(tmpblank[0]->c_str(), output);
-          tmpblank.clear();
-          last = input_buffer.getPos();
-          ms.init(me->getInitial());
+        tmpword.clear();
+        tmpwordblank.clear();
+        input_buffer.setPos(last_out);
+        input_buffer.next();
+        last_out = input_buffer.getPos();
+        ms.init(me->getInitial());
+      }
+      else if(tmpsuperblank.size() != 0)
+      {
+        for(std::vector<wstring>::const_iterator it = tmpsuperblank.begin(); it != tmpsuperblank.end(); it++) {
+          fputws_unlocked((it)[0].c_str(), output);
         }
+        tmpsuperblank.clear();
+        last_out = input_buffer.getPos();
+        ms.init(me->getInitial());
       }
     }
     int val = ms.classifyFinals(me->getFinals());
     if(val != -1)
     {
       lastrule = rule_map[val-1];
-      last = input_buffer.getPos();
+      last_out = input_buffer.getPos();
 
       if(trace)
       {
@@ -2062,18 +2072,43 @@ Transfer::transfer(FILE *in, FILE *out)
       }
     }
 
-    if(!consumeWord(in)) {
-      return;
+
+    TransferToken &current = readWord(in);
+    switch(current.getType())
+    {
+      case tt_word:
+        if(tmpword.size() > 1) {
+          ms.step(L' ');
+        }
+        applyWord(current.getContent());
+        break;
+
+      case tt_eof:
+        if(tmpword.size() > 0) {
+          // We still have words to print, but clear match state since
+          // it's not possible to match longer rule sequences:
+          ms.clear();
+        }
+        else {
+          for(std::vector<wstring>::const_iterator it = tmpsuperblank.begin(); it != tmpsuperblank.end(); it++) {
+            fputws_unlocked((it)[0].c_str(), output);
+          }
+          tmpsuperblank.clear();
+          return;
+        }
+        break;
+
+      default:
+        cerr << "Error: Unknown input token." << endl;
+        return;
     }
   }
 }
 
-bool
-Transfer::consumeWord(FILE *in)
+TransferToken &
+Transfer::readWord(FILE *in)
 {
-  wstring supers, wordblank, freeblank;
-  enum blank_state { init, seen_blank };
-  blank_state state = init;
+  wstring supers, lastwordblank, lastfreeblank;
 
   while(true) {
     TransferToken &current = readToken(in);
@@ -2081,68 +2116,40 @@ Transfer::consumeWord(FILE *in)
     switch(current.getType())
     {
       case tt_word:
-        switch(state) {
-          case init:
-            applyWord(current.getContent());
-            tmpword.push_back(&current.getContent());
-            break;
-
-          case seen_blank:
-            ms.step(L' ');
-            applyWord(current.getContent());
-            tmpword.push_back(&current.getContent());
-            // TODO: putback word instead? or just push to tmpword?
-            tmpwordblank.push_back(&wordblank);
-            tmpfreeblank.push_back(&freeblank);
-            tmpsuperblank.push_back(&supers);
-            break;
-        }
-        return true;
+        tmpword.push_back(&current.getContent());
+        tmpwordblank.push_back(lastwordblank);
+        tmpfreeblank.push_back(lastfreeblank);
+        tmpsuperblank.push_back(supers);
+        return current;
 
       case tt_superblank:
-        supers += freeblank;
-        freeblank = L"";
+        supers += lastfreeblank;
+        lastfreeblank = L"";
         supers += current.getContent();
-        wordblank = L"";
-        state = seen_blank;
+        lastwordblank = L"";
         continue;
 
       case tt_freeblank:
-        supers += freeblank;
-        freeblank = current.getContent();
-        wordblank = L"";
-        state = seen_blank;
+        supers += lastfreeblank;
+        lastfreeblank = current.getContent();
+        lastwordblank = L"";
         continue;
 
       case tt_wordblank:
-        wordblank = current.getContent();
-        state = seen_blank;
+        lastwordblank = current.getContent();
         continue;
 
       case tt_eof:
-        if(tmpword.size() != 0)
-        {
-          supers += freeblank;
-          freeblank = L"";
-          supers += current.getContent();
-          wordblank = L"";
-          tmpwordblank.push_back(&wordblank);
-          tmpfreeblank.push_back(&freeblank);
-          tmpsuperblank.push_back(&supers);
-          ms.clear();
-          return true;
-        }
-        else
-        {
-          fputws_unlocked(freeblank.c_str(), output);
-          fputws_unlocked(current.getContent().c_str(), output);
-          return false;
-        }
-        break;
+        supers += lastfreeblank;
+        supers += current.getContent();
+        tmpwordblank.push_back(L"");
+        tmpfreeblank.push_back(L"");
+        tmpsuperblank.push_back(supers);
+        return current;
 
       default:
-        cerr << "Error: Unknown input token." << endl;
-        return false;
+        // let caller handle it
+        return current;
     }
   }
 }
@@ -2152,29 +2159,21 @@ void
 Transfer::applyRule()
 {
   unsigned int limit = tmpword.size();
-  //wcerr << L"applyRule: " << tmpword.size() << endl;
+  wcerr << L"applyRule, limit=" << tmpword.size() << endl;
 
   for(unsigned int i = 0; i != limit; i++)
   {
+    wcerr << L"i: " << i<< L" size: "<<tmpwordblank.size() << endl;
     if(i == 0)
     {
       word = new TransferWord *[limit];
       lword = limit;
-      if(limit != 1)
-      {
-        blank = new string *[limit - 1];
-        lblank = limit - 1;
-      }
-      else
-      {
-        blank = NULL;
-        lblank = 0;
-      }
+      wordblank = new string *[limit];
     }
-    else
-    {
-      blank[i-1] = new string(UtfConverter::toUtf8(*tmpwordblank[i-1]));
-    }
+    wcerr << L"tmpword["<<i<<"]="<<*(tmpword[i])<<endl;
+    wcerr << L"tmpwordblank[i]="<<(tmpwordblank[i])<<endl;
+
+    wordblank[i] = new string(UtfConverter::toUtf8(tmpwordblank[i]));
 
     pair<wstring, int> tr;
     if(useBilingual && preBilingual == false)
@@ -2183,48 +2182,7 @@ Transfer::applyRule()
     }
     else if(preBilingual)
     {
-      //wcerr << "applyRule: " << *tmpword[i] << endl;
-      wstring sl;
-      wstring tl;
-      int seenSlash = 0;
-      for(wstring::const_iterator it = tmpword[i]->begin(); it != tmpword[i]->end(); it++)
-      {
-        if(*it == L'\\')
-        {
-          if(seenSlash == 0)
-          {
-            sl.push_back(*it);
-            it++;
-            sl.push_back(*it);
-          }
-          else
-          {
-            tl.push_back(*it);
-            it++;
-            tl.push_back(*it);
-          }
-          continue;
-        }
-
-        if(*it == L'/')
-        {
-          seenSlash++;
-          continue;
-        }
-        if(seenSlash == 0)
-        {
-          sl.push_back(*it);
-        }
-        else if(seenSlash == 1)
-        {
-          tl.push_back(*it);
-        }
-        else if(seenSlash > 1)
-        {
-          break;
-        }
-      }
-      //tmpword[i]->assign(sl);
+      wstring tl = firstTranslationOfWord(*tmpword[0]);
       tr = pair<wstring, int>(tl, false);
     }
     else
@@ -2233,7 +2191,7 @@ Transfer::applyRule()
     }
 
     word[i] = new TransferWord(UtfConverter::toUtf8(*tmpword[i]),
-			       UtfConverter::toUtf8(tr.first), tr.second);
+                               UtfConverter::toUtf8(tr.first), tr.second);
   }
 
   processRule(lastrule);
@@ -2247,16 +2205,16 @@ Transfer::applyRule()
     }
     delete[] word;
   }
-  if(blank)
+  if(wordblank)
   {
     for(unsigned int i = 0; i != limit - 1; i++)
     {
-      delete blank[i];
+      delete wordblank[i];
     }
-    delete[] blank;
+    delete[] wordblank;
   }
   word = NULL;
-  blank = NULL;
+  wordblank = NULL;
   tmpword.clear();
   tmpwordblank.clear();
   ms.init(me->getInitial());
