@@ -57,6 +57,7 @@ private:
   xmlNode *root_element;
   TransferWord **word;
   string **wordblank;
+  string **freeblank;
   int lword;
   Buffer<TransferToken> input_buffer;
   std::vector<wstring *> tmpword;
@@ -71,7 +72,6 @@ private:
   int any_char;
   int any_tag;
 
-  xmlNode *lastrule;
   unsigned int nwords;
 
   map<xmlNode *, TransferInstr> evalStringCache;
@@ -135,7 +135,7 @@ private:
   wstring readBlank(FILE *in);
   wstring readUntil(FILE *in, int const symbol) const;
   void applyWord(wstring const &word_str);
-  void applyRule();
+  void applyRule(xmlNode *rule);
 
   /**
    * Wrapper around readToken, reads up until the next word or EOF,
