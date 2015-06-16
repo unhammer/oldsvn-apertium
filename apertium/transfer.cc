@@ -393,18 +393,19 @@ Transfer::evalString(xmlNode *element)
         return ti.getContent();
 
       case ti_b:
-        // return " ";
         if(freeblank.empty()) {
           return " ";
         }
         else {
           wstring blank = freeblank.front();
           freeblank.pop_front();
+          wcerr <<L"blank=?"<<blank<<endl;
           if(blank.empty())     // TODO: or?
           {
             return " ";
           }
           else {
+            wcerr <<L"blank="<<blank<<endl;
             return UtfConverter::toUtf8(blank).c_str();
           }
         }
@@ -2134,9 +2135,13 @@ Transfer::applyRule(xmlNode *rule)
       word = new TransferWord *[limit];
       lword = limit;
       format = new string *[limit];
+      fputws_unlocked(tmpword[i]->getFreeblank().c_str(), output);
+    }
+    else if(!tmpword[i]->getFreeblank().empty())
+    {
+      freeblank.push_back(tmpword[i]->getFreeblank());
     }
     format[i] = new string(UtfConverter::toUtf8(tmpword[i]->getFormat()));
-    freeblank.push_back(tmpword[i]->getFreeblank());
 
     pair<wstring, int> tr;
     if(useBilingual && preBilingual == false)
