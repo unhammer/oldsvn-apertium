@@ -1807,6 +1807,7 @@ Transfer::readToken(FILE *in)
     return input_buffer.next();
   }
 
+  // TODO: there's a lot of assignment and appending going on here, is this a performance issue?
   wstring content, superblank, freeblank, format;
   while(true)
   {
