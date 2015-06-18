@@ -100,7 +100,7 @@ TransferToken::operator =(TransferToken const &o)
 }
 
 TransferTokenType
-TransferToken::getType()
+TransferToken::getType() const
 {
   return type;
 }

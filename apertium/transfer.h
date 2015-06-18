@@ -136,7 +136,7 @@ private:
   wstring readUntil(FILE *in, int const symbol) const;
   void applyWord(wstring const &word_str);
   void applyRule(xmlNode *rule);
-  void applyDefaultRule(wstring const &word);
+  void applyDefaultRule(TransferToken &token);
 
   TransferToken & readToken(FILE *in);
   bool checkIndex(xmlNode *element, int index, int limit);

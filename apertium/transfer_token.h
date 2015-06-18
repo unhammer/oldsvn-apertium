@@ -51,7 +51,7 @@ public:
   ~TransferToken();
   TransferToken(TransferToken const &o);
   TransferToken & operator =(TransferToken const &o);
-  TransferTokenType getType();
+  TransferTokenType getType() const;
   void setType(TransferTokenType type);
   wstring & getWord();
   wstring & getSuperblank();

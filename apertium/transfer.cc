@@ -1954,8 +1954,11 @@ Transfer::firstTranslationOfWord(wstring const &word) const
 }
 
 void
-Transfer::applyDefaultRule(wstring const &word)
+Transfer::applyDefaultRule(TransferToken &token)
 {
+  fputws_unlocked(token.getSuperblank().c_str(), output);
+  fputws_unlocked(token.getFreeblank().c_str(), output);
+  wstring const &word = token.getWord();
   pair<wstring, int> tr;
   if(useBilingual && preBilingual == false)
   {
@@ -1990,6 +1993,7 @@ Transfer::applyDefaultRule(wstring const &word)
   {
     if(defaultAttrs == lu)
     {
+      fputws_unlocked(token.getFormat().c_str(), output);
       fputwc_unlocked(L'^', output);
       fputws_unlocked(tr.first.c_str(), output);
       fputwc_unlocked(L'$', output);
@@ -1998,12 +2002,14 @@ Transfer::applyDefaultRule(wstring const &word)
     {
       if(tr.first[0] == '*')
       {
-        fputws_unlocked(L"^unknown<unknown>{^", output);
+        fputws_unlocked(L"^unknown<unknown>{", output);
       }
       else
       {
-        fputws_unlocked(L"^default<default>{^", output);
+        fputws_unlocked(L"^default<default>{", output);
       }
+      fputws_unlocked(token.getFormat().c_str(), output);
+      fputws_unlocked(L"^", output);
       fputws_unlocked(tr.first.c_str(), output);
       fputws_unlocked(L"$}$", output);
     }
@@ -2043,7 +2049,7 @@ Transfer::transfer(FILE *in, FILE *out)
       }
       else if(tmpword.size() != 0)
       {
-        applyDefaultRule(tmpword[0]->getWord());
+        applyDefaultRule(*tmpword[0]);
         tmpword.clear();
         input_buffer.setPos(last_out);
         input_buffer.next();
