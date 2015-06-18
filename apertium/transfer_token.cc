@@ -50,7 +50,7 @@ TransferToken::TransferToken(wstring const &word, TransferTokenType type)
 TransferToken::TransferToken(TransferTokenType type,
                              wstring const &superblank)
 {
-  this->word = word;
+  this->type = type;
   this->superblank = superblank;
 }
 

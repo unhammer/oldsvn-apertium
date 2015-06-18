@@ -2030,6 +2030,7 @@ Transfer::transfer(FILE *in, FILE *out)
     {
       if(lastrule != NULL)
       {
+        tmpword.pop_back();     // ms is empty, so we must've matched "one too many" tokens
         for(unsigned int ind = 0; ind < tmpword.size(); ind++)
         {
           fputws_unlocked(tmpword[ind]->getSuperblank().c_str(), output);
@@ -2091,6 +2092,7 @@ Transfer::transfer(FILE *in, FILE *out)
           // We still have words to print, but clear match state since
           // it's not possible to match longer rule sequences:
           ms.clear();
+          tmpword.push_back(&current);
           break;
         }
         else {
@@ -2099,7 +2101,7 @@ Transfer::transfer(FILE *in, FILE *out)
         }
 
       default:
-        cerr << "Error: Unknown input token." << endl;
+        wcerr << L"Error: Unknown input token." << endl;
         return;
     }
   }
