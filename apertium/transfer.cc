@@ -1807,17 +1807,6 @@ Transfer::readToken(FILE *in)
     return input_buffer.next();
   }
 
-  // TODO: there's a lot of assignment and appending going on here, is
-  // this a performance issue? idea: alternate way; just keep track of
-  // _last superblank-end_ and _start-of-last-formatblank_. ie input is
-  // [<p>] [{<b>}]^kake…
-  //     i j
-  //
-  // then we want to keep track of the indices i and j above. Then
-  // content[0:i] is super, content[i:j] is free, content[j:] is
-  // format. We just pass the indices to TransferToken's constructor,
-  // and it does substring in the getter (for example, could do it on
-  // init as well but then it has to be stored).
   wstring content, preblank;
   int superend = 0;
   int formatstart = -1;
@@ -1831,7 +1820,7 @@ Transfer::readToken(FILE *in)
     if(val == '\\')
     {
       content += L'\\';
-      content += (wchar_t) fgetwc_unlocked(in);
+      content += wchar_t(fgetwc_unlocked(in));
     }
     else if(val == L'[')
     {
