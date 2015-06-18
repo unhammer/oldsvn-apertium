@@ -576,17 +576,20 @@ Transfer::evalString(xmlNode *element)
   else if(!xmlStrcmp(element->name, (const xmlChar *) "lu"))
   {
     string myword;
+    // TODO: get possible lu-attrib
+    best_blank_pos blankfrom;
     for(xmlNode *i = element->children; i != NULL; i = i->next)
     {
       if(i->type == XML_ELEMENT_NODE)
       {
         myword.append(evalString(i));
+        blankfrom = wordBlankPos(i, blankfrom);
       }
     }
 
     if(myword != "")
     {
-      return "^"+myword+"$";
+      return (*format[blankfrom.first])+"^"+myword+"$";
     }
     else
     {
@@ -824,8 +827,8 @@ Transfer::processChunk(xmlNode *localroot)
         }
         if(myword != "")
         {
-          result.append("^");
           result.append(*format[blankfrom.first]);
+          result.append("^");
           result.append(myword);
           result.append("$");
         }
