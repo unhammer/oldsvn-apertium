@@ -1818,16 +1818,15 @@ Transfer::readToken(FILE *in)
   // format. We just pass the indices to TransferToken's constructor,
   // and it does substring in the getter (for example, could do it on
   // init as well but then it has to be stored).
-  wstring content, superblank, freeblank, format;
+  wstring content, preblank;
+  int superend = 0;
+  int formatstart = -1;
   while(true)
   {
     int val = fgetwc_unlocked(in);
     if(feof(in) || (val == 0 && internal_null_flush))
     {
-      superblank += content;
-      content.clear();
-      return input_buffer.add(TransferToken(content, tt_eof,
-                                            superblank, freeblank, format));
+      return input_buffer.add(TransferToken(tt_eof, content));
     }
     if(val == '\\')
     {
@@ -1836,22 +1835,17 @@ Transfer::readToken(FILE *in)
     }
     else if(val == L'[')
     {
-      superblank += freeblank;
-      freeblank = content;
-      content = L"[";
+      content += L'[';
       int val2 = fgetwc_unlocked(in);
       bool is_format;
       if(val2 == L'{')
       {
+        formatstart = content.size()-1;
         is_format = true;
       }
       else
       {
         is_format = false;
-        superblank += freeblank;
-        freeblank.clear();
-        superblank += format;
-        format.clear();
       }
       while(true)
       {
@@ -1862,15 +1856,9 @@ Transfer::readToken(FILE *in)
         }
         else if(val2 == L']')
         {
-          if(is_format)
+          if(!is_format)
           {
-            format = content;
-            content.clear();
-          }
-          else
-          {
-            superblank += content;
-            content.clear();
+            superend = content.size();
           }
           break;
         }
@@ -1880,15 +1868,11 @@ Transfer::readToken(FILE *in)
     else if(val == L'$')
     {
       return input_buffer.add(TransferToken(content, tt_word,
-                                            superblank, freeblank, format));
+                                            preblank, superend, formatstart));
     }
     else if(val == L'^')
     {
-      if(!content.empty()) {
-        superblank += freeblank;
-        freeblank = content;
-        content.clear();
-      }
+      preblank.swap(content);
     }
     else if(val == L'\0' && null_flush)
     {
@@ -2161,7 +2145,7 @@ Transfer::applyRule(xmlNode *rule)
     }
     else if(preBilingual)
     {
-      wstring tl = firstTranslationOfWord(tmpword[0]->getWord());
+      wstring tl = firstTranslationOfWord(tmpword[i]->getWord());
       tr = pair<wstring, int>(tl, false);
     }
     else

@@ -18,6 +18,7 @@
  */
 #include <apertium/transfer_token.h>
 #include <apertium/string_utils.h>
+#include <iostream>
 
 using namespace Apertium;
 
@@ -40,24 +41,41 @@ TransferToken::TransferToken()
 {
 }
 
-TransferToken::TransferToken(wstring const &word,
-                             TransferTokenType type)
+TransferToken::TransferToken(wstring const &word, TransferTokenType type)
 {
   this->word = word;
   this->type = type;
 }
 
-TransferToken::TransferToken(wstring const &word,
-                             TransferTokenType type,
-                             wstring const &superblank,
-                             wstring const &freeblank,
-                             wstring const &format)
+TransferToken::TransferToken(TransferTokenType type,
+                             wstring const &superblank)
+{
+  this->word = word;
+  this->superblank = superblank;
+}
+
+TransferToken::TransferToken(wstring const &word, TransferTokenType type,
+                             wstring const &blank, int superend, int formatstart)
 {
   this->word = word;
   this->type = type;
-  this->superblank = superblank;
-  this->freeblank = freeblank;
-  this->format = format;
+
+  int end = (int) blank.size();
+  if(formatstart < 0) {
+    formatstart = end;
+  }
+  if(0 <= superend && superend <= formatstart && formatstart <= end) {
+    this->superblank = blank.substr(0, superend);
+    this->freeblank = blank.substr(superend, formatstart-superend);
+    this->format = blank.substr(formatstart);
+  }
+  else {
+    // TODO: should we fail here? means caller has a bug
+    wcerr << L"Warning in TransferToken::(): bad blank indices, making all super"<<endl;
+    this->superblank = blank;
+  }
+
+
 }
 
 TransferToken::~TransferToken()

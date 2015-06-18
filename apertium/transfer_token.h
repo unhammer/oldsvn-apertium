@@ -44,9 +44,10 @@ private:
 public:
   TransferToken();
   TransferToken(wstring const &content, TransferTokenType type);
+  TransferToken(TransferTokenType type,
+                wstring const &superblank);
   TransferToken(wstring const &word, TransferTokenType type,
-                wstring const &superblank, wstring const &freeblank,
-                wstring const &format);
+                wstring const &blank, int superend, int formatstart);
   ~TransferToken();
   TransferToken(TransferToken const &o);
   TransferToken & operator =(TransferToken const &o);
