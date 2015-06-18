@@ -686,6 +686,7 @@ Transfer::processOut(xmlNode *localroot)
         }
         else if(!xmlStrcmp(i->name, (const xmlChar *) "mlu"))
         {
+          // TODO: formatblank
           fputwc_unlocked('^', output);
           bool first_time = true;
           for(xmlNode *j = i->children; j != NULL; j = j->next)
@@ -811,6 +812,7 @@ Transfer::processChunk(xmlNode *localroot)
       else if(!xmlStrcmp(i->name, (const xmlChar *) "lu"))
       {
         string myword;
+        // TODO: get possible lu-attrib
         best_blank_pos blankfrom;
         for(xmlNode *j = i->children; j != NULL; j = j->next)
         {
@@ -823,12 +825,14 @@ Transfer::processChunk(xmlNode *localroot)
         if(myword != "")
         {
           result.append("^");
+          result.append(*format[blankfrom.first]);
           result.append(myword);
           result.append("$");
         }
       }
       else if(!xmlStrcmp(i->name, (const xmlChar *) "mlu"))
       {
+        // TODO: formatblank
         bool first_time = true;
         string myword;
         for(xmlNode *j = i->children; j != NULL; j = j->next)
