@@ -2224,6 +2224,7 @@ Transfer::applyRule()
 {
   unsigned int limit = tmpword.size();
   number = limit;
+  present_words.clear();
   // present = false;
   // wcerr << L"applyRule: " << tmpword.size() << endl;
   
