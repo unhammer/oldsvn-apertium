@@ -317,6 +317,8 @@ Transfer::evalString(xmlNode *element)
           p = make_pair(word[ti.getPos()]->target(attr_items[ti.getContent()], ti.getCondition()), ti.getPos());
           wstring wstr (p.first.begin(), p.first.end());
           // wcout << "ti_clip_tl is " << wstr << " and position is " << ti.getPos() << endl;
+          if(p.first[0] != '<')
+            present_words[p.first] = 1;
           // return p;
           return p;
         }
@@ -558,12 +560,17 @@ Transfer::evalString(xmlNode *element)
     if(myword != "")
     {
       string s="";
-      // wcout << "\npresent value is " << present << endl;
+      int l = myword.length();
       if(position >= 0 && position < number )
       { 
-        // wcout << "In\n";
-        // present = false;
-        s = *wordbound[position];
+        string temp;
+        int j = 0;
+        while(j < l && myword[j] !='<')
+          temp += myword[j++];
+        // wstring ws (temp.begin(), temp.end());
+        // wcout << "temp word is" << ws << endl;
+        if(present_words.find(temp) != present_words.end())
+          s = *wordbound[position];
       }
       return make_pair(s+"^"+myword+"$", position);
     }
@@ -618,15 +625,17 @@ Transfer::evalString(xmlNode *element)
     {
       string s="";
       // wcout << "\npresent value is " << present << endl;
-
+      int l = value.length();
       if(position >= 0 && position < number )
       { 
-        // wcout << "In\n";
-        // present = false;
-        // wcout << "No of blanks is " << number << endl;
-        //         wstring wstr (*blank[position]->begin(), *blank[position]->end());
-        // wcout << "blank in mlu in evalString is " << wstr << endl;
-        s = *wordbound[position];
+        string temp;
+        int j = 0;
+        while(j < l && value[j] !='<')
+          temp += value[j++];
+        // wstring ws (temp.begin(), temp.end());
+        // wcout << "temp word is" << ws << endl;
+        if(present_words.find(temp) != present_words.end())
+          s = *wordbound[position];
       }
       return make_pair(s+"^"+value+"$", position);
     }
@@ -673,14 +682,17 @@ Transfer::processOut(xmlNode *localroot)
 	  if(myword != "")
 	  {  
       // wcout << "\npresent value is " << present << endl;
+      int l = myword.length();
       if(position >= 0 && position < number )
       { 
-        // wcout << "huiej\n";
-        // present = false;
-        // wcout << "Number of blanks is " << number << endl;
-        //         wstring wstr (*blank[position]->begin(), *blank[position]->end());
-        // wcout << "blank in processOut in lu " << wstr << endl;
-        fputws_unlocked(UtfConverter::fromUtf8(*wordbound[position]).c_str(), output);
+        string temp;
+        int j = 0;
+        while(j < l && myword[j] !='<')
+          temp += myword[j++];
+        // wstring ws (temp.begin(), temp.end());
+        // wcout << "temp word is" << ws << endl;
+        if(present_words.find(temp) != present_words.end())
+          fputws_unlocked(UtfConverter::fromUtf8(*wordbound[position]).c_str(), output);
   	   }
         fputwc_unlocked(L'^', output);
    	    fputws_unlocked(UtfConverter::fromUtf8(myword).c_str(), output);
@@ -690,16 +702,8 @@ Transfer::processOut(xmlNode *localroot)
         else if(!xmlStrcmp(i->name, (const xmlChar *) "mlu"))
         {
           // wcout << "\npresent value is " << present << endl;
-          if(position >= 0 && position < number )
-          { 
-            // wcout << "sdbksdc\n";
-            // present = false;
-            // wcout << "No of blanks in mlu is " << number << endl;
-            //         wstring wstr (*blank[position]->begin(), *blank[position]->end());
-            // wcout << "blank in processOut in mlu is " << wstr << endl;
-            fputws_unlocked(UtfConverter::fromUtf8(*wordbound[position]).c_str(), output);
-          }
-	  fputwc_unlocked('^', output);
+          string value;
+	  // fputwc_unlocked('^', output);
 	  bool first_time = true;
 	  for(xmlNode *j = i->children; j != NULL; j = j->next)
 	  {
@@ -719,7 +723,7 @@ Transfer::processOut(xmlNode *localroot)
 	      {
 	        if(myword != "" && myword[0] != '#')  //'+#' problem
 	        {
-	          fputwc_unlocked(L'+', output);
+	          value.append("+");
                 }
 	      }
 	      else
@@ -729,9 +733,23 @@ Transfer::processOut(xmlNode *localroot)
 	          first_time = false;
                 }
 	      }
-	      fputws_unlocked(UtfConverter::fromUtf8(myword).c_str(), output);
+	      value.append(myword);
 	    }
 	  }
+    if(position >= 0 && position < number )
+    { 
+      string temp;
+      int l = value.length();
+      int j = 0;
+      while(j < l && value[j] !='<')
+        temp += value[j++];
+      // wstring ws (temp.begin(), temp.end());
+      // wcout << "temp word is" << ws << endl;
+      if(present_words.find(temp) != present_words.end())
+        fputws_unlocked(UtfConverter::fromUtf8(*wordbound[position]).c_str(), output);
+    }
+    fputwc_unlocked(L'^',output);
+    fputws_unlocked(UtfConverter::fromUtf8(value).c_str(), output);
 	  fputwc_unlocked(L'$', output);
         }
         else // 'b'
@@ -843,15 +861,17 @@ Transfer::processChunk(xmlNode *localroot)
         }
         if(myword != "")
         { 
-          // wcout << "\npresent value is " << present << endl;
           if(position >= 0 && position < number )
           {
-            // wcout << "ksjcnjds\n";
-            // present = false;
-            // wcout << "No of blanks is " << number << endl;
-            //         wstring wstr (*blank[position]->begin(), *blank[position]->end());
-            // wcout << "blank in chunk in lu is " << wstr << endl;
-            result.append(*wordbound[position]);
+            string temp;
+            int l = myword.length();
+            int j = 0;
+            while(j < l && myword[j] !='<')
+              temp += myword[j++];
+            // wstring ws (temp.begin(), temp.end());
+            // wcout << "temp word is" << ws << endl;
+            if(present_words.find(temp) != present_words.end())
+              result.append(*wordbound[position]);
           }
           result.append("^");
           result.append(myword);
@@ -894,15 +914,17 @@ Transfer::processChunk(xmlNode *localroot)
         }
         if(myword != "")
         { 
-          // wcout << "\npresent value is " << present << endl;
           if(position >= 0 && position < number )
           {
-            // wcout << "jsddncjks\n";
-            // present = false;
-            // wcout << "NO of blanks in mlu is this " << number << endl;
-            //         wstring wstr (*blank[position]->begin(), *blank[position]->end());
-            // wcout << "blank in chunk in mlu is " << wstr << endl;
-            result.append(*wordbound[position]);
+            string temp;
+            int l = myword.length();
+            int j = 0;
+            while(j < l && myword[j] !='<')
+              temp += myword[j++];
+            // wstring ws (temp.begin(), temp.end());
+            // wcout << "temp word is" << ws << endl;
+            if(present_words.find(temp) != present_words.end())
+              result.append(*wordbound[position]);
           }
           result.append("^");
           result.append(myword);

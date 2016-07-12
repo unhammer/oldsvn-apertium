@@ -47,6 +47,7 @@ private:
   Alphabet alphabet;
   MatchExe *me;
   MatchState ms;
+  map<string, int> present_words;
   map<string, ApertiumRE, Ltstr> attr_items;
   map<string, string, Ltstr> variables;
   map<string, int, Ltstr> macros;
@@ -77,7 +78,7 @@ private:
   int any_char;
   int any_tag;
   int check;
-  bool present;
+  
 
   xmlNode *lastrule;
   unsigned int nwords;
