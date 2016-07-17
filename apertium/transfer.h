@@ -29,6 +29,7 @@
 #include <lttoolbox/ltstr.h>
 #include <lttoolbox/match_exe.h>
 #include <lttoolbox/match_state.h>
+#include <utility>
 
 #include <cstdio>
 #include <libxml/parser.h>
@@ -46,6 +47,7 @@ private:
   Alphabet alphabet;
   MatchExe *me;
   MatchState ms;
+  map<string, int> present_words;
   map<string, ApertiumRE, Ltstr> attr_items;
   map<string, string, Ltstr> variables;
   map<string, int, Ltstr> macros;
@@ -56,11 +58,18 @@ private:
   xmlDoc *doc;
   xmlNode *root_element;
   TransferWord **word;
+  // string *superblank;
+  string **wordbound;
   string **blank;
-  int lword, lblank;
+  int lword, lblank, position,number;
   Buffer<TransferToken> input_buffer;
   vector<wstring *> tmpword;
   vector<wstring *> tmpblank;
+  vector<wstring *> tmpbound;
+  wstring last_wordblank;
+
+
+
 
   FSTProcessor fstp;
   FSTProcessor extended;
@@ -68,6 +77,8 @@ private:
   FILE *output;
   int any_char;
   int any_tag;
+  int check;
+  
 
   xmlNode *lastrule;
   unsigned int nwords;
@@ -82,8 +93,10 @@ private:
   bool null_flush;
   bool internal_null_flush;
   bool trace;
+  bool printed;
   string emptyblank;
   
+  // void add_in_vectors(TransferToken &current);
   void copy(Transfer const &o);
   void destroy();
   void readData(FILE *input);
@@ -112,11 +125,13 @@ private:
   bool processNot(xmlNode *localroot);
   bool processIn(xmlNode *localroot);
   void processRule(xmlNode *localroot);
-  string evalString(xmlNode *localroot);
+  pair<string, int> evalString(xmlNode *localroot);
   void processInstruction(xmlNode *localroot);
   void processChoose(xmlNode *localroot);
   string processChunk(xmlNode *localroot);
   string processTags(xmlNode *localroot);
+  wstring add_last_wordblank(wstring const &str);
+  wstring phrasebound(wstring const &str);
 
   bool beginsWith(string const &str1, string const &str2) const;
   bool endsWith(string const &str1, string const &str2) const;
