@@ -362,15 +362,13 @@ Transfer::evalString(xmlNode *element)
       case ti_b:
         if(checkIndex(element, ti.getPos(), lblank))
         {
+          // wcout << "\nValue of ti.getPos() is " << ti.getPos() << endl;
           if(ti.getPos() >= 0)
           { 
+            // wcout << "Value of ti.getPos() is " << ti.getPos() << endl;
             if(blank)
-            {
-              string s = *blank[ti.getPos()];
-              return make_pair(s,ti.getPos());
-            }
-            else
-              return make_pair("", ti.getPos());
+              return make_pair(*blank[ti.getPos()],ti.getPos());
+            return make_pair("", ti.getPos());
             // return !blank?"":*(blank[ti.getPos()]);
           }
           return make_pair(" ", ti.getPos());
@@ -560,6 +558,7 @@ Transfer::evalString(xmlNode *element)
     if(myword != "")
     {
       string s="";
+      string e="";
       int l = myword.length();
       if(position >= 0 && position < number )
       { 
@@ -570,9 +569,13 @@ Transfer::evalString(xmlNode *element)
         // wstring ws (temp.begin(), temp.end());
         // wcout << "temp word is" << ws << endl;
         if(present_words.find(temp) != present_words.end())
+        {
           s = *wordbound[position];
+          if(position < number-1 )
+            e = *emptyblanks[position];
+        }
       }
-      return make_pair(s+"^"+myword+"$", position);
+      return make_pair(s+"^"+myword+"$"+e, position);
     }
     else
     {
@@ -624,6 +627,7 @@ Transfer::evalString(xmlNode *element)
     if(value != "")
     {
       string s="";
+      string e="";
       // wcout << "\npresent value is " << present << endl;
       int l = value.length();
       if(position >= 0 && position < number )
@@ -635,9 +639,13 @@ Transfer::evalString(xmlNode *element)
         // wstring ws (temp.begin(), temp.end());
         // wcout << "temp word is" << ws << endl;
         if(present_words.find(temp) != present_words.end())
+        {
+          if(position < number-1 )
+            e = *emptyblanks[position];
           s = *wordbound[position];
+        }
       }
-      return make_pair(s+"^"+value+"$", position);
+      return make_pair(s+"^"+value+"$"+e, position);
     }
     else
     {
@@ -683,6 +691,7 @@ Transfer::processOut(xmlNode *localroot)
 	  {  
       // wcout << "\npresent value is " << present << endl;
       int l = myword.length();
+      string e="";
       if(position >= 0 && position < number )
       { 
         string temp;
@@ -692,11 +701,16 @@ Transfer::processOut(xmlNode *localroot)
         // wstring ws (temp.begin(), temp.end());
         // wcout << "temp word is" << ws << endl;
         if(present_words.find(temp) != present_words.end())
+        {
           fputws_unlocked(UtfConverter::fromUtf8(*wordbound[position]).c_str(), output);
+          if(position < number-1 )
+            e = *emptyblanks[position];
+        }
   	   }
         fputwc_unlocked(L'^', output);
    	    fputws_unlocked(UtfConverter::fromUtf8(myword).c_str(), output);
 	    fputwc_unlocked(L'$', output);
+      fputws_unlocked(UtfConverter::fromUtf8(e).c_str(),output);
           }
         }
         else if(!xmlStrcmp(i->name, (const xmlChar *) "mlu"))
@@ -736,6 +750,7 @@ Transfer::processOut(xmlNode *localroot)
 	      value.append(myword);
 	    }
 	  }
+    string e="";
     if(position >= 0 && position < number )
     { 
       string temp;
@@ -746,11 +761,16 @@ Transfer::processOut(xmlNode *localroot)
       // wstring ws (temp.begin(), temp.end());
       // wcout << "temp word is" << ws << endl;
       if(present_words.find(temp) != present_words.end())
+      {
+        if(position < number-1 )
+          e = *emptyblanks[position];
         fputws_unlocked(UtfConverter::fromUtf8(*wordbound[position]).c_str(), output);
+      }
     }
     fputwc_unlocked(L'^',output);
     fputws_unlocked(UtfConverter::fromUtf8(value).c_str(), output);
 	  fputwc_unlocked(L'$', output);
+    fputws_unlocked(UtfConverter::fromUtf8(e).c_str(),output);
         }
         else // 'b'
         { 
@@ -785,6 +805,7 @@ Transfer::processChunk(xmlNode *localroot)
   string name, namefrom;
   string caseofchunk = "aa";
   string result;
+  in_chunk = true;
       
   
   for(xmlAttr *i = localroot->properties; i != NULL; i = i->next)
@@ -859,6 +880,7 @@ Transfer::processChunk(xmlNode *localroot)
             position = p.second;
           }
         }
+        string e="";
         if(myword != "")
         { 
           if(position >= 0 && position < number )
@@ -871,11 +893,16 @@ Transfer::processChunk(xmlNode *localroot)
             // wstring ws (temp.begin(), temp.end());
             // wcout << "temp word is" << ws << endl;
             if(present_words.find(temp) != present_words.end())
+            {
+              if(position < number-1 )
+                e = *emptyblanks[position];
               result.append(*wordbound[position]);
+            }
           }
           result.append("^");
           result.append(myword);
           result.append("$");
+          result.append(e);
         }
       }
       else if(!xmlStrcmp(i->name, (const xmlChar *) "mlu"))
@@ -912,6 +939,7 @@ Transfer::processChunk(xmlNode *localroot)
           }
           myword.append(mylocalword);
         }
+        string e="";
         if(myword != "")
         { 
           if(position >= 0 && position < number )
@@ -924,11 +952,16 @@ Transfer::processChunk(xmlNode *localroot)
             // wstring ws (temp.begin(), temp.end());
             // wcout << "temp word is" << ws << endl;
             if(present_words.find(temp) != present_words.end())
+            {
+              if(position < number-1 )
+                e = *emptyblanks[position];
               result.append(*wordbound[position]);
+            }
           }
           result.append("^");
           result.append(myword);
           result.append("$");
+          result.append(e);
         }
       }
       else // 'b'
@@ -941,6 +974,7 @@ Transfer::processChunk(xmlNode *localroot)
     }
   }
   result.append("}$");
+  in_chunk = false;
   return result;
 }
 
@@ -1970,6 +2004,92 @@ Transfer::transfer_wrapper_null_flush(FILE *in, FILE *out)
   null_flush = true;
 }
 
+bool
+Transfer::super(wstring const &str)
+{
+  int l = str.length();
+  int j = 0;
+  while(j < l)
+  {
+    if(str[j]==L'[' && str[j+1]==L']')
+      return true;
+    j++;
+  }
+  return false;
+}
+wstring
+Transfer::add_last_phraseblank(wstring const &str)
+{
+  int l = str.length();
+  int j = 0;
+  wstring lastblank = L"";
+  while(j < l)
+  {
+    if(str[j]==L'[' && str[j+1]!=L'{')
+    {
+      lastblank += L'[';
+      j++;
+      while(str[j]!=L']')
+        lastblank += str[j++];
+      lastblank += L']';
+      break;
+    }
+    j++;
+  }
+  return lastblank;
+}
+
+wstring
+Transfer::trim(wstring const &str)
+{
+  int l = str.length();
+  int j = 0;
+  wstring res=L"";
+  while(j < l)
+  {
+    if(str[j]==L'[')
+    {
+      res += '[';
+      j++;
+      while(str[j]!=L']')
+        res += str[j++];
+      res += L']';
+      break;
+    }
+    j++;
+  }
+  return res;
+}
+
+pair<wstring,wstring>
+Transfer::phrase_and_wordbound(string const &s)
+{
+  int l = s.length();
+
+  int j = 0;
+  string sb = "";
+  string wb = "";
+
+  while( j < l+1)
+  {
+    if(s[j] == '[' && s[j+1] == '{')
+    {
+      wb += "[{";
+      j += 2;
+      while(s[j]!=']')
+        wb += s[j++];
+      wb += "]";
+      j++;
+    }
+    else
+      sb += s[j++];
+  }
+
+  wstring w_sb (sb.begin(), sb.end());
+  wstring w_wb (wb.begin(), wb.end());
+  return make_pair(w_sb, w_wb);
+}
+
 wstring 
 Transfer::add_last_wordblank(wstring const &str)
 {
@@ -2183,6 +2303,7 @@ Transfer::transfer(FILE *in, FILE *out)
 
     TransferToken &current = readToken(in);
     // wcout << "Token is " << current.getContent() << endl;
+
    
     switch(current.getType())
     {
@@ -2194,9 +2315,11 @@ Transfer::transfer(FILE *in, FILE *out)
       case tt_blank:
 	ms.step(L' ');
 	tmpblank.push_back(&current.getContent());
+  last_phraseblank = add_last_phraseblank(current.getContent());
   if(tmpword.size() == 0)
     last_wordblank = add_last_wordblank(current.getContent());
   // wcout << "tmpword.size() = " << tmpword.size() << endl;
+
 	break;
 
       case tt_eof:
@@ -2225,28 +2348,27 @@ Transfer::applyRule()
   unsigned int limit = tmpword.size();
   number = limit;
   present_words.clear();
-  // present = false;
-  // wcerr << L"applyRule: " << tmpword.size() << endl;
+  superblanks = L"";
+  wcerr << L"applyRule: " << tmpword.size() << endl;
+  
   
   for(unsigned int i = 0; i != limit; i++)
   {
     if(i == 0)
     {
       word = new TransferWord *[limit];
-      
       wordbound = new string *[limit];
       wordbound[0] = new string(UtfConverter::toUtf8(last_wordblank));
-      // wcout << "Last wordlank is " << last_wordblank << endl;
-
+      
       lword = limit;
       if(limit != 1)
       {
         blank = new string *[limit - 1];
+        emptyblanks = new string *[limit - 1];
         lblank = limit - 1;
       }
       else
       {
-        // wcout << "last_wordblank in case of " << last_wordblank << endl;
         blank = NULL;
         lblank = 0;
       }
@@ -2255,32 +2377,23 @@ Transfer::applyRule()
     {
       string *temp = new string(UtfConverter::toUtf8(*tmpblank[i-1]));
       string s (temp->begin(), temp->end());
-      int l = s.length();
+      pair<wstring,wstring> p;
+      p = phrase_and_wordbound(s);
 
-      int j = 0;
-      string sb = "";
-      string wb = "";
-
-      while( j < l+1)
+      wordbound[i] = new string(UtfConverter::toUtf8(p.second));
+      if(super(p.first))
       {
-        if(s[j] == '[' && s[j+1] == '{')
-        {
-          wb += "[{";
-          j += 2;
-          while(s[j]!=']')
-            wb += s[j++];
-          wb += "]";
-          j++;
-        }
-        else
-          sb += s[j++];
+        emptyblanks[i-1] = new string(UtfConverter::toUtf8(p.first));
+        blank[i-1] = new string(UtfConverter::toUtf8(L""));
       }
-
-      wstring w_sb (sb.begin(), sb.end());
-      wstring w_wb (wb.begin(), wb.end());
-
-      blank[i-1] = new string(UtfConverter::toUtf8(w_sb));
-      wordbound[i] = new string(UtfConverter::toUtf8(w_wb));
+      else
+      {
+        emptyblanks[i-1] = new string(UtfConverter::toUtf8(L""));
+        blank[i-1] = new string(UtfConverter::toUtf8(p.first));
+      }
+      wstring bl = trim(p.first);
+      if(bl.compare(last_phraseblank) && !super(p.first))
+        superblanks += trim(p.first);
     }
     
     pair<wstring, int> tr;
@@ -2349,7 +2462,8 @@ Transfer::applyRule()
   //   wstring wstr (st.begin(), st.end());
   //   wcout << "blank is " << wstr << endl;
   // }
-
+  // wcout << "superblanks are" << superblanks << endl;
+  fputws_unlocked(superblanks.c_str(),output);
   processRule(lastrule);
   lastrule = NULL;
 

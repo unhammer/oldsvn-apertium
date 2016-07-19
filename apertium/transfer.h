@@ -37,6 +37,7 @@
 #include <map>
 #include <set>
 #include <vector>
+#include <queue>
 
 using namespace std;
 
@@ -58,15 +59,18 @@ private:
   xmlDoc *doc;
   xmlNode *root_element;
   TransferWord **word;
-  // string *superblank;
   string **wordbound;
   string **blank;
+  string **emptyblanks;
   int lword, lblank, position,number;
   Buffer<TransferToken> input_buffer;
   vector<wstring *> tmpword;
   vector<wstring *> tmpblank;
   vector<wstring *> tmpbound;
   wstring last_wordblank;
+  wstring last_phraseblank;
+  wstring superblanks;
+  queue<wstring > superb_s;
 
 
 
@@ -88,6 +92,7 @@ private:
   enum OutputType{lu,chunk};
   
   OutputType defaultAttrs;
+  bool in_chunk;
   bool preBilingual;
   bool useBilingual;
   bool null_flush;
@@ -96,7 +101,10 @@ private:
   bool printed;
   string emptyblank;
   
-  // void add_in_vectors(TransferToken &current);
+  
+  pair<wstring,wstring> phrase_and_wordbound(string const &s);
+  bool super(wstring const &str);
+
   void copy(Transfer const &o);
   void destroy();
   void readData(FILE *input);
@@ -128,10 +136,15 @@ private:
   pair<string, int> evalString(xmlNode *localroot);
   void processInstruction(xmlNode *localroot);
   void processChoose(xmlNode *localroot);
+  void add_in_present(wstring const &str);
   string processChunk(xmlNode *localroot);
   string processTags(xmlNode *localroot);
   wstring add_last_wordblank(wstring const &str);
+  wstring add_last_phraseblank(wstring const &str);
   wstring phrasebound(wstring const &str);
+  pair<wstring,wstring> phrase_and_wordblank_pair(string const &s);
+  wstring trim(wstring const &str);
+
 
   bool beginsWith(string const &str1, string const &str2) const;
   bool endsWith(string const &str1, string const &str2) const;
@@ -145,6 +158,7 @@ private:
   TransferToken & readToken(FILE *in);
   bool checkIndex(xmlNode *element, int index, int limit);
   void transfer_wrapper_null_flush(FILE *in, FILE *out);
+
 public:
   Transfer();
   ~Transfer();
