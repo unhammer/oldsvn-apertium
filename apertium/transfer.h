@@ -61,16 +61,10 @@ private:
   TransferWord **word;
   string **wordbound;
   string **blank;
-  string **emptyblanks;
   int lword, lblank, position,number;
   Buffer<TransferToken> input_buffer;
-  vector<wstring *> tmpword;
-  vector<wstring *> tmpblank;
-  vector<wstring *> tmpbound;
-  wstring last_wordblank;
-  wstring last_phraseblank;
-  wstring superblanks;
-  queue<wstring > superb_s;
+  vector<TransferToken *> tmpword;
+  std::deque<wstring> freeblank;
 
 
 
@@ -101,9 +95,6 @@ private:
   bool printed;
   string emptyblank;
   
-  
-  pair<wstring,wstring> phrase_and_wordbound(string const &s);
-  bool super(wstring const &str);
 
   void copy(Transfer const &o);
   void destroy();
@@ -139,11 +130,10 @@ private:
   void add_in_present(wstring const &str);
   string processChunk(xmlNode *localroot);
   string processTags(xmlNode *localroot);
-  wstring add_last_wordblank(wstring const &str);
-  wstring add_last_phraseblank(wstring const &str);
-  wstring phrasebound(wstring const &str);
-  pair<wstring,wstring> phrase_and_wordblank_pair(string const &s);
-  wstring trim(wstring const &str);
+  wstring firstTranslationOfWord(wstring const &word) const;
+  void applyDefaultRule(TransferToken &token);
+  typedef std::pair<int, string> best_blank_pos;
+  best_blank_pos wordBlankPos(xmlNode *localroot, best_blank_pos best_so_far);
 
 
   bool beginsWith(string const &str1, string const &str2) const;
@@ -154,7 +144,7 @@ private:
   wstring readBlank(FILE *in);
   wstring readUntil(FILE *in, int const symbol) const;
   void applyWord(wstring const &word_str);
-  void applyRule();
+  void applyRule(xmlNode *rule);
   TransferToken & readToken(FILE *in);
   bool checkIndex(xmlNode *element, int index, int limit);
   void transfer_wrapper_null_flush(FILE *in, FILE *out);
