@@ -308,8 +308,8 @@ TransferMult::transfer(FILE *in, FILE *out)
     switch(current.getType())
     {
       case tt_word:
-	applyWord(current.getWord());
-        tmpword.push_back(&current.getWord());
+	applyWord(current.getContent());
+        tmpword.push_back(&current.getContent());
 	break;
 
   //     case tt_superblank:
@@ -320,12 +320,12 @@ TransferMult::transfer(FILE *in, FILE *out)
       case tt_eof:
 	if(tmpword.size() != 0)
 	{
-	  tmpblank.push_back(&current.getWord());
+	  tmpblank.push_back(&current.getContent());
 	  ms.clear();
 	}
 	else
 	{
-	  fputws_unlocked(current.getWord().c_str(), output);
+	  fputws_unlocked(current.getContent().c_str(), output);
 	  return;
 	}
 	break;
