@@ -27,6 +27,7 @@ enum TransferTokenType
 {
   tt_eof,
   tt_word,
+  tt_blank
 };
 
 
@@ -34,6 +35,7 @@ class TransferToken
 {
 private:
   TransferTokenType type;
+  wstring content;
   wstring word;
   wstring superblank;
   wstring freeblank;
@@ -48,11 +50,15 @@ public:
                 wstring const &superblank);
   TransferToken(wstring const &word, TransferTokenType type,
                 wstring const &blank, int superend, int formatstart);
+  TransferToken(wstring const &content, TransferTokenType type,
+                             wstring const &blank);
   ~TransferToken();
   TransferToken(TransferToken const &o);
   TransferToken & operator =(TransferToken const &o);
-  TransferTokenType getType() const;
+  TransferTokenType getType();
+  wstring & getContent();
   void setType(TransferTokenType type);
+  void setContent(wstring const &content);
   wstring & getWord();
   wstring & getSuperblank();
   wstring & getFreeblank();

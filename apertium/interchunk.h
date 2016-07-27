@@ -57,10 +57,11 @@ private:
   xmlNode *root_element;
   InterchunkWord **word;
   string **blank;
-  int lword, lblank;
+  string **superblanks;
+  int lword, lblank, position, number;
   Buffer<TransferToken> input_buffer;
-  vector<wstring *> tmpword;
-  vector<wstring *> tmpblank;
+  vector<TransferToken *> tmpword;
+  // vector<wstring *> tmpblank;
 
   FILE *output;
   int any_char;
@@ -74,6 +75,7 @@ private:
   bool null_flush;
   bool internal_null_flush;
   bool trace;
+  string emptyblank;
   
   void copy(Interchunk const &o);
   void destroy();
@@ -102,7 +104,7 @@ private:
   bool processNot(xmlNode *localroot);
   bool processIn(xmlNode *localroot);
   void processRule(xmlNode *localroot);
-  string evalString(xmlNode *localroot);
+  pair<string,int> evalString(xmlNode *localroot);
   void processInstruction(xmlNode *localroot);
   void processChoose(xmlNode *localroot);
   string processChunk(xmlNode *localroot);
@@ -115,7 +117,7 @@ private:
   string readBlank(FILE *in);
   string readUntil(FILE *in, int const symbol) const;
   void applyWord(wstring const &word_str);
-  void applyRule();
+  void applyRule(xmlNode *rule);
   TransferToken & readToken(FILE *in);
   bool checkIndex(xmlNode *element, int index, int limit); 
   void interchunk_wrapper_null_flush(FILE *in, FILE *out);

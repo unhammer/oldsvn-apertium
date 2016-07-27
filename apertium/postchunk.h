@@ -56,10 +56,12 @@ private:
   xmlNode *root_element;
   InterchunkWord **word;
   string **blank;
-  int lword, lblank;
+  string **word_blank;
+  int lword, lblank, position;
   Buffer<TransferToken> input_buffer;
   vector<wstring *> tmpword;
   vector<wstring *> tmpblank;
+  const char* msg;
 
   FILE *output;
   int any_char;
@@ -102,7 +104,7 @@ private:
   bool processNot(xmlNode *localroot);
   bool processIn(xmlNode *localroot);
   void processRule(xmlNode *localroot);
-  string evalString(xmlNode *localroot);
+  pair<string,int> evalString(xmlNode *localroot);
   void processInstruction(xmlNode *localroot);
   void processChoose(xmlNode *localroot);
   void processTags(xmlNode *localroot);
@@ -121,8 +123,8 @@ private:
   static int beginChunk(wstring const &chunk);
   static int endChunk(wstring const &chunk);
   static void splitWordsAndBlanks(wstring const &chunk, 
-				  vector<wstring *> &words,
-				  vector<wstring *> &blanks);
+          vector<wstring *> &words,
+          vector<wstring *> &blanks);
   static wstring pseudolemma(wstring const &chunk);
   static wstring wordzero(wstring const &chunk);
   bool checkIndex(xmlNode *element, int index, int limit);  

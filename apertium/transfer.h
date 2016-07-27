@@ -29,6 +29,7 @@
 #include <lttoolbox/ltstr.h>
 #include <lttoolbox/match_exe.h>
 #include <lttoolbox/match_state.h>
+#include <utility>
 
 #include <cstdio>
 #include <libxml/parser.h>
@@ -36,16 +37,18 @@
 #include <map>
 #include <set>
 #include <vector>
+#include <queue>
 
 using namespace std;
 
 class Transfer
 {
 private:
-
+  
   Alphabet alphabet;
   MatchExe *me;
   MatchState ms;
+  map<string, int> present_words;
   map<string, ApertiumRE, Ltstr> attr_items;
   map<string, string, Ltstr> variables;
   map<string, int, Ltstr> macros;
@@ -56,14 +59,15 @@ private:
   xmlDoc *doc;
   xmlNode *root_element;
   TransferWord **word;
-  string **format;              /* TODO: make part of TransferWord? */
-  std::deque<wstring> freeblank;
-  int lword;
+  string **wordbound;
+  string **blank;
+  int lword, lblank, position,number;
   Buffer<TransferToken> input_buffer;
-  std::vector<TransferToken *> tmpword;
-  /* std::vector<wstring> tmpwordblank; */
-  /* std::deque<wstring> tmpfreeblank; */
-  /* std::vector<wstring> tmpsuperblank; */
+  vector<TransferToken *> tmpword;
+  std::deque<wstring> freeblank;
+
+
+
 
   FSTProcessor fstp;
   FSTProcessor extended;
@@ -71,20 +75,26 @@ private:
   FILE *output;
   int any_char;
   int any_tag;
+  int check;
+  
 
+  xmlNode *lastrule;
   unsigned int nwords;
-
+  
   map<xmlNode *, TransferInstr> evalStringCache;
 
   enum OutputType{lu,chunk};
-
+  
   OutputType defaultAttrs;
+  bool in_chunk;
   bool preBilingual;
   bool useBilingual;
   bool null_flush;
   bool internal_null_flush;
   bool trace;
+  bool printed;
   string emptyblank;
+  
 
   void copy(Transfer const &o);
   void destroy();
@@ -114,39 +124,37 @@ private:
   bool processNot(xmlNode *localroot);
   bool processIn(xmlNode *localroot);
   void processRule(xmlNode *localroot);
-  typedef std::pair<int, string> best_blank_pos;
-  /**
-   * Try to improve the current best guess for the position that
-   * becomes the wordbound blank of this node.
-   */
-  best_blank_pos wordBlankPos(xmlNode *localroot, best_blank_pos best_so_far);
-  string evalString(xmlNode *localroot);
+  pair<string, int> evalString(xmlNode *localroot);
   void processInstruction(xmlNode *localroot);
   void processChoose(xmlNode *localroot);
+  void add_in_present(wstring const &str);
   string processChunk(xmlNode *localroot);
   string processTags(xmlNode *localroot);
-
   wstring firstTranslationOfWord(wstring const &word) const;
+  void applyDefaultRule(TransferToken &token);
+  typedef std::pair<int, string> best_blank_pos;
+  best_blank_pos wordBlankPos(xmlNode *localroot, best_blank_pos best_so_far);
+
 
   bool beginsWith(string const &str1, string const &str2) const;
   bool endsWith(string const &str1, string const &str2) const;
   string tolower(string const &str) const;
   string tags(string const &str) const;
+  wstring readWord(FILE *in);
   wstring readBlank(FILE *in);
   wstring readUntil(FILE *in, int const symbol) const;
   void applyWord(wstring const &word_str);
   void applyRule(xmlNode *rule);
-  void applyDefaultRule(TransferToken &token);
-
   TransferToken & readToken(FILE *in);
   bool checkIndex(xmlNode *element, int index, int limit);
   void transfer_wrapper_null_flush(FILE *in, FILE *out);
+
 public:
   Transfer();
   ~Transfer();
   Transfer(Transfer const &o);
   Transfer & operator =(Transfer const &o);
-
+  
   void read(string const &transferfile, string const &datafile,
 	    string const &fstfile = "");
   void transfer(FILE *in, FILE *out);
