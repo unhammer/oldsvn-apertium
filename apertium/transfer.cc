@@ -2031,12 +2031,13 @@ Transfer::output_transfer(wstring const &str)
   int l = str.length();
   int j = 0;
   bool in_inline = false;
-  wcerr << str << endl << endl;
+  // wcerr << str << endl << endl;
   wstring final = L"";
   while(j < l-1)
   {
     if(str[j] == L'$')
     { 
+      final += L'$';
       j++;
       bool found = false;
       wstring temp = L"";
