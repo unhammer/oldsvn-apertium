@@ -65,6 +65,7 @@ private:
   Buffer<TransferToken> input_buffer;
   vector<TransferToken *> tmpword;
   std::deque<wstring> freeblank;
+  wstring output_string;
 
 
 
@@ -132,6 +133,8 @@ private:
   string processTags(xmlNode *localroot);
   wstring firstTranslationOfWord(wstring const &word) const;
   void applyDefaultRule(TransferToken &token);
+  wstring emptyblanks(wstring const &str);
+  void output_transfer(wstring const &str);
   typedef std::pair<int, string> best_blank_pos;
   best_blank_pos wordBlankPos(xmlNode *localroot, best_blank_pos best_so_far);
 

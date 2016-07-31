@@ -729,12 +729,16 @@ Transfer::processOut(xmlNode *localroot)
       // int num = blankfrom.first;
       // wcerr << "blankfrom.first is " << num << "and position is " << position << endl;
       if(position >= 0 && position < number )
-      { 
-          fputws_unlocked(UtfConverter::fromUtf8(*wordbound[position]).c_str(), output);
+      {   
+          output_string += UtfConverter::fromUtf8(*wordbound[position]);
+          // fputws_unlocked(UtfConverter::fromUtf8(*wordbound[position]).c_str(), output);
   	   }
-        fputwc_unlocked(L'^', output);
-   	    fputws_unlocked(UtfConverter::fromUtf8(myword).c_str(), output);
-	    fputwc_unlocked(L'$', output);
+        output_string += L'^';
+        output_string += UtfConverter::fromUtf8(myword);
+        output_string += L'$';
+     //    fputwc_unlocked(L'^', output);
+   	 //    fputws_unlocked(UtfConverter::fromUtf8(myword).c_str(), output);
+	    // fputwc_unlocked(L'$', output);
           }
         }
         else if(!xmlStrcmp(i->name, (const xmlChar *) "mlu"))
@@ -775,31 +779,35 @@ Transfer::processOut(xmlNode *localroot)
 	    }
 	  }
     // string e="";
-    fputwc_unlocked(L'^',output);
-    fputws_unlocked(UtfConverter::fromUtf8(value).c_str(), output);
-	  fputwc_unlocked(L'$', output);
+    output_string += L'^'+UtfConverter::fromUtf8(value)+ L'$';
+   //  fputwc_unlocked(L'^',output);
+   //  fputws_unlocked(UtfConverter::fromUtf8(value).c_str(), output);
+	  // fputwc_unlocked(L'$', output);
         }
         else // 'b'
         { 
           pair<string, int> p;
           p = evalString(i);
           position = p.second;
-          fputws_unlocked(UtfConverter::fromUtf8(p.first).c_str(), 
-			  output);
+          output_string += UtfConverter::fromUtf8(p.first);
+          // fputws_unlocked(UtfConverter::fromUtf8(p.first).c_str(), 
+			  // output);
         }
       }
       else 
       {
         if(!xmlStrcmp(i->name, (const xmlChar *) "chunk"))
-        {
-          fputws_unlocked(UtfConverter::fromUtf8(processChunk(i)).c_str(), output);
+        { 
+          output_string += UtfConverter::fromUtf8(processChunk(i));
+          // fputws_unlocked(UtfConverter::fromUtf8(processChunk(i)).c_str(), output);
         }
         else // 'b'
         { 
           pair<string, int> p;
           p = evalString(i);
           position = p.second;
-          fputws_unlocked(UtfConverter::fromUtf8(p.first).c_str(), output);
+          output_string += UtfConverter::fromUtf8(p.first); 
+          // fputws_unlocked(UtfConverter::fromUtf8(p.first).c_str(), output);
         }        
       }
     }
@@ -1984,7 +1992,8 @@ Transfer::transfer_wrapper_null_flush(FILE *in, FILE *out)
   while(!feof(in))
   {
     transfer(in, out);
-    fputwc_unlocked(L'\0', out);
+    output_string += L'\0';
+    // fputwc_unlocked(L'\0', out);
     int code = fflush(out);
     if(code != 0)
     {
@@ -1994,6 +2003,69 @@ Transfer::transfer_wrapper_null_flush(FILE *in, FILE *out)
 
   internal_null_flush = false;
   null_flush = true;
+}
+
+wstring 
+Transfer::emptyblanks(wstring const &str)
+{
+  wstring final = L"";
+  int l = str.length();
+  // wcerr << str << endl << endl;
+  int j = 0;
+  while(j < l-1)
+  {
+    if(str[j]==L'[' && str[j+1] == L']')
+      j += 2;
+    else
+      final += str[j++];
+  }
+  if(j < l)
+    final += str[j];
+
+  return final;
+}
+
+void
+Transfer::output_transfer(wstring const &str)
+{
+  int l = str.length();
+  int j = 0;
+  bool in_inline = false;
+  wcerr << str << endl << endl;
+  wstring final = L"";
+  while(j < l-1)
+  {
+    if(str[j] == L'$')
+    { 
+      j++;
+      bool found = false;
+      wstring temp = L"";
+      while(str[j]!= L'^' && j < l-1)
+      {
+        if(str[j] == '[')
+          found = true;
+        temp += str[j++];
+      }
+      if(!found && in_inline)
+      { 
+        in_inline = false;
+        temp = L"[]" + temp + str[j++];
+      }
+      final += temp;
+    }
+    else if(str[j] == L'[' && str[j+1] == L'{')
+    {
+      in_inline = true;
+      final += L"[{";
+      j += 2;
+    }
+    else
+      final += str[j++];
+  }
+  if(j < l)
+    final += str[j];
+
+  fputws_unlocked(final.c_str(), output);
 }
 
 wstring
@@ -2039,8 +2111,10 @@ Transfer::firstTranslationOfWord(wstring const &word) const
 void
 Transfer::applyDefaultRule(TransferToken &token)
 {
-  fputws_unlocked(token.getSuperblank().c_str(), output);
-  fputws_unlocked(token.getFreeblank().c_str(), output);
+  output_string += emptyblanks(token.getSuperblank());
+  output_string += emptyblanks(token.getFreeblank());
+  // fputws_unlocked(token.getSuperblank().c_str(), output);
+  // fputws_unlocked(token.getFreeblank().c_str(), output);
   wstring const &word = token.getContent();
   pair<wstring, int> tr;
   if(useBilingual && preBilingual == false)
@@ -2076,25 +2150,30 @@ Transfer::applyDefaultRule(TransferToken &token)
   {
     if(defaultAttrs == lu)
     {
-      fputws_unlocked(token.getFormat().c_str(), output);
-      fputwc_unlocked(L'^', output);
-      fputws_unlocked(tr.first.c_str(), output);
-      fputwc_unlocked(L'$', output);
+      output_string += token.getFormat();
+      output_string += L'^' + tr.first + L'$';
+      // fputws_unlocked(token.getFormat().c_str(), output);
+      // fputwc_unlocked(L'^', output);
+      // fputws_unlocked(tr.first.c_str(), output);
+      // fputwc_unlocked(L'$', output);
     }
     else
     {
       if(tr.first[0] == '*')
-      {
-        fputws_unlocked(L"^unknown<unknown>{", output);
+      { 
+        output_string += L"^unknown<unknown>{";
+        // fputws_unlocked(L"^unknown<unknown>{", output);
       }
       else
       {
-        fputws_unlocked(L"^default<default>{", output);
+        output_string += L"^default<default>{";
+        // fputws_unlocked(L"^default<default>{", output);
       }
-      fputws_unlocked(token.getFormat().c_str(), output);
-      fputws_unlocked(L"^", output);
-      fputws_unlocked(tr.first.c_str(), output);
-      fputws_unlocked(L"$}$", output);
+      output_string += token.getFormat() + L"^" + tr.first + L"$}$";
+      // fputws_unlocked(token.getFormat().c_str(), output);
+      // fputws_unlocked(L"^", output);
+      // fputws_unlocked(tr.first.c_str(), output);
+      // fputws_unlocked(L"$}$", output);
     }
   }
 }
@@ -2112,6 +2191,7 @@ Transfer::transfer(FILE *in, FILE *out)
   output = out;
   position = -2;
   ms.init(me->getInitial());
+  output_string = L"";
   
   while(true)
   {
@@ -2122,7 +2202,8 @@ Transfer::transfer(FILE *in, FILE *out)
         tmpword.pop_back();
         for(unsigned int ind = 0; ind < tmpword.size(); ind++)
         {
-          fputws_unlocked(tmpword[ind]->getSuperblank().c_str(), output);
+          output_string += emptyblanks(tmpword[ind]->getSuperblank());
+          // fputws_unlocked(tmpword[ind]->getSuperblank().c_str(), output);
         }
       	applyRule(lastrule);
         lastrule = NULL;
@@ -2188,7 +2269,9 @@ Transfer::transfer(FILE *in, FILE *out)
           break;
         }
         else {
-          fputws_unlocked(current.getSuperblank().c_str(), output);
+          output_string += emptyblanks(current.getSuperblank());
+          output_transfer(output_string);
+          // fputws_unlocked(output_string.c_str(), output);
           return;
         }
 	    break;
@@ -2198,6 +2281,8 @@ Transfer::transfer(FILE *in, FILE *out)
 	return;
     }
   }
+  // wcerr << "Output string is " << output_string << "this" << endl;
+  // fputws_unlocked(output_string.c_str(),output);
 }
 
 void
@@ -2216,7 +2301,8 @@ Transfer::applyRule(xmlNode *rule)
       word = new TransferWord *[limit];
       wordbound = new string *[limit];
       // wordbound[0] = new string(UtfConverter::toUtf8(last_wordblank));
-      fputws_unlocked(tmpword[i]->getFreeblank().c_str(), output);
+      output_string += emptyblanks(tmpword[i]->getFreeblank());
+      // fputws_unlocked(tmpword[i]->getFreeblank().c_str(), output);
       
       lword = limit;
 
@@ -2268,7 +2354,8 @@ Transfer::applyRule(xmlNode *rule)
   {
     for(std::deque<wstring>::const_iterator it = freeblank.begin(); it != freeblank.end(); it++)
     {
-      fputws_unlocked(it->c_str(), output);
+      output_string += it->c_str();
+      // fputws_unlocked(it->c_str(), output);
     }
   }
 
