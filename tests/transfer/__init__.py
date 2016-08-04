@@ -90,7 +90,7 @@ class BasicTransferTest(TransferTest):
                      "[1] [2]^Det_nom<SN><DET><m><sg>{^mío<det><pos><mf><4>$ ^Tío<n><3><4>$}$ ^pr<GEN>{}$[3] ^nom<SN><UNDET><f><sg>{^hijo<n><3><4>$}$ [4]^be<Vcop><vbser><pri><p3><sg>{^ser<vbser><3><4><5>$}$ [5] ^det_nom<SN><DET><GD><sg>{^mío<det><pos><mf><4>$ ^primo<n><3><4>$}$"]
     @unittest.expectedFailure
     def runTest(self):
-    super().runTest(self)
+        super().runTest(self)
 
 class InterchunkTransferTest(TransferTest):
     inputs =          ["[1]^Nom_pr_nom_pr_nom_pr_nom<SN><UNDET><f><sg>{[{2}]^olla<n><3><4>$ ^de<pr>$ ^té<n><m><sg>$[] ^de<pr>$ ^hombre<n><m><sg>$ ^de<pr>$ ^poste<n><m><sg>$}$", 
