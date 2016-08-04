@@ -1,0 +1,1245 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- -*- nxml -*- -->
+<!-- TODO:
+     * stop using GD, just check whether the determiner (or whatever) has some gender already
+-->
+<interchunk>
+
+  <section-def-cats>
+    <def-cat n="unknown">
+      <cat-item tags="unknown"/>
+    </def-cat>
+    <def-cat n="nom">
+      <cat-item tags="n.*"/>
+      <cat-item tags="n.*.gen"/>
+      <cat-item tags="np.*"/>
+    </def-cat>
+    <def-cat n="nind">
+      <cat-item tags="n.*.ind"/>
+    </def-cat>
+    <def-cat n="ndef">
+      <cat-item tags="n.*.def"/>
+    </def-cat>
+    <def-cat n="prep_gen">
+      <cat-item lemma="gen-prep" tags="pr"/>
+    </def-cat>
+    <def-cat n="ngen">
+      <cat-item tags="n.*.gen"/>
+    </def-cat>
+    <def-cat n="detgen">
+      <cat-item tags="det.*.gen"/>
+    </def-cat>
+    <def-cat n="detind">
+      <cat-item tags="det.*.ind"/>
+      <cat-item tags="det.*.sg"/>
+    </def-cat>
+    <def-cat n="det">
+      <cat-item tags="det.*"/>
+    </def-cat>
+    <def-cat n="prn">
+      <cat-item tags="prn.*"/>
+    </def-cat>
+    <def-cat n="sin">
+      <cat-item lemma="detsin" tags="det.pos.*"/>
+    </def-cat>
+    <def-cat n="detpos">
+      <cat-item tags="det.pos.*"/>
+    </def-cat>
+    <def-cat n="detnonpos">
+      <cat-item tags="det.def.*"/>
+      <cat-item tags="det.dem.*"/>
+      <cat-item tags="det.emph.*"/>
+      <cat-item tags="det.itg.*"/>
+      <cat-item tags="det.qnt.*"/>
+    </def-cat>
+
+    <def-cat n="vblex">
+      <cat-item tags="vblex"/>
+      <cat-item tags="vblex.*"/>
+    </def-cat>
+    <def-cat n="aux">
+      <cat-item lemma="aux" tags="vblex"/>
+      <cat-item lemma="aux" tags="vblex.*"/>
+    </def-cat>
+    <def-cat n="auxpass" c="Auxiliary generated in t1x">
+      <cat-item lemma="aux" tags="vblex.*.pasv"/>
+    </def-cat>
+    <def-cat n="infaux">
+      <cat-item lemma="aux" tags="vblex.inf"/>
+      <cat-item lemma="aux" tags="vblex.inf.*"/>
+    </def-cat>
+    <def-cat n="adv">
+      <cat-item tags="adv"/>
+      <cat-item tags="adv.*"/>
+    </def-cat>
+    <def-cat n="infm">
+      <cat-item lemma="infm" tags="cnjsub"/>
+      <cat-item lemma="infm" tags="cnjsub.*"/>
+    </def-cat>
+    <def-cat n="lemq">
+      <cat-item tags="vblex.lemq"/>
+      <cat-item tags="vblex.lemq.*"/>
+    </def-cat>
+    <def-cat n="adjpart">
+      <cat-item tags="vblex.pp"/>
+      <cat-item tags="adj.pp"/>
+      <cat-item tags="adj.pp.*"/>
+    </def-cat>
+    <def-cat n="single-adjpart"> <!-- chunk lemma ensures it's a single-word chunk -->
+      <cat-item lemma="vblex" tags="vblex.pp"/>
+      <cat-item lemma="adj" tags="adj.pp"/>
+      <cat-item lemma="adj" tags="adj.pp.*"/>
+    </def-cat>
+  </section-def-cats>
+
+  <section-def-attrs>
+    <def-attr n="a_nom">
+      <attr-item tags="n"/>
+      <attr-item tags="n.acr"/>
+      <attr-item tags="np"/>
+      <attr-item tags="np.top"/>
+    </def-attr>
+    <def-attr n="persona">
+      <attr-item tags="p1"/>
+      <attr-item tags="p2"/>
+      <attr-item tags="p3"/>
+    </def-attr>
+    <def-attr n="a_verb">
+      <attr-item tags="vblex"/>
+      <attr-item tags="vblex.pstv"/>
+    </def-attr>
+    <def-attr n="temps">
+      <attr-item tags="inf"/>
+      <attr-item tags="imp"/>
+      <attr-item tags="pres"/>
+      <attr-item tags="pret"/>
+      <attr-item tags="pp"/>
+    </def-attr>
+    <def-attr n="voice">
+      <attr-item tags="pasv"/>
+    </def-attr>
+    <def-attr n="a_det">
+      <attr-item tags="det"/>
+      <attr-item tags="det.emph"/>
+      <attr-item tags="det.dem"/>
+      <attr-item tags="det.itg"/>
+      <attr-item tags="det.qnt"/>
+      <attr-item tags="det.qnt.neg"/>
+      <attr-item tags="det.pos"/>
+    </def-attr>
+    <def-attr n="gen">
+      <attr-item tags="m"/>
+      <attr-item tags="mf"/>
+      <attr-item tags="nt"/>
+      <attr-item tags="f"/>
+      <attr-item tags="GD"/>
+    </def-attr>
+    <def-attr n="nbr">
+      <attr-item tags="sg"/>
+      <attr-item tags="pl"/>
+      <attr-item tags="sp"/>
+      <attr-item tags="ND"/>
+    </def-attr>
+    <def-attr n="cas">
+      <attr-item tags="nom"/>
+      <attr-item tags="gen"/>
+      <attr-item tags="acc"/>
+      <attr-item tags="CD"/>
+    </def-attr>
+    <def-attr n="art">
+      <attr-item tags="def"/>
+      <attr-item tags="ind"/>
+    </def-attr>
+  </section-def-attrs>
+
+
+  <section-def-vars>
+    <def-var n="caseFirstWord"/>
+    <def-var n="det_gender"/>
+    <def-var n="number_no_sp"/>
+    <def-var n="adj_number"/>
+    <def-var n="adj_gender"/>
+    <def-var n="adj_defness"/>
+    <def-var n="n_number"/>
+    <def-var n="case"/>
+    <def-var n="n_defness"/>
+    <def-var n="lemh"/>
+    <def-var n="ana_gen"/>
+    <def-var n="ana_nbr"/>
+  </section-def-vars>
+
+  <section-def-macros>
+
+    <!-- Macros which set concordance variables etc.: -->
+    <def-macro n="switch_cases" npar="2">
+      <let><var n="caseFirstWord"/><get-case-from pos="1"><clip pos="1" part="lemh"/></get-case-from></let>
+      <let><clip pos="1" part="lemh"/><get-case-from pos="2"><clip pos="1" part="lemh"/></get-case-from></let>
+      <modify-case><clip pos="2" part="lemh"/><var n="caseFirstWord"/></modify-case>
+    </def-macro>
+
+    <def-macro n="get_case_from_detpos" npar="2">
+      <!-- arg.1: possessed noun. arg.2: det.pos, gives typographic case -->
+      <choose>
+        <when>
+          <test>
+            <and>
+              <equal><clip pos="2" part="lemh"/><lit v="De"/></equal>
+              <equal><clip pos="2" part="a_det"/><lit-tag v="det.pos"/></equal>
+              <equal><clip pos="2" part="persona"/><lit-tag v="p2"/></equal>
+            </and>
+          </test>
+          <let><var n="lemh"/><clip pos="1" part="lemh"/></let>
+        </when>
+        <otherwise>
+          <let><var n="lemh"/><get-case-from pos="2"><clip pos="1" part="lemh"/></get-case-from></let>
+        </otherwise>
+      </choose>
+    </def-macro>
+    <def-macro n="modify_case_detpos" npar="2">
+      <!-- arg.1: possessed noun. arg.2: det.pos, gives typographic case
+           Workaround for Polite forms.
+      -->
+      <choose>
+        <when>
+          <test><not>
+            <and>
+              <equal><clip pos="2" part="lemh"/><lit v="De"/></equal>
+              <equal><clip pos="2" part="a_det"/><lit-tag v="det.pos"/></equal>
+              <equal><clip pos="2" part="persona"/><lit-tag v="p2"/></equal>
+            </and>
+          </not></test>
+          <modify-case><clip pos="2" part="lemh"/><clip pos="1" part="lemh"/></modify-case>
+        </when>
+      </choose>
+    </def-macro>
+
+    <def-macro n="set_det_gender1.n" npar="1"
+               c="arg.1: noun. Sets variables for creating a new determiner.">
+
+      <let><var n="number_no_sp"/><clip pos="1" part="nbr"/></let>
+      <choose><when>
+        <test><or>
+          <equal><var n="number_no_sp"/><lit-tag v="sp"/></equal>
+          <equal><var n="number_no_sp"/><lit v=""/></equal>
+        </or></test>
+        <let><var n="number_no_sp"/><lit-tag v="pl"/></let>
+      </when></choose>
+      <choose>
+        <when>
+          <test><equal><var n="number_no_sp"/><lit-tag v="sg"/></equal></test>
+          <let><var n="det_gender"/><clip pos="1" part="gen"/></let>
+          <choose>
+            <when>
+              <test><or>
+                <equal><var n="det_gender"/><lit v=""/></equal>
+                <and>
+                  <equal><var n="number_no_sp"/><lit-tag v="sg"/></equal>
+                  <equal><clip pos="1" part="gen"/><lit-tag v="GD"/></equal>
+                </and>
+              </or></test>
+              <let><var n="det_gender"/><lit-tag v="m"/></let>
+            </when>
+          </choose>
+        </when>
+        <otherwise>
+          <let><var n="det_gender"/><lit-tag v="un"/></let>
+        </otherwise>
+      </choose>
+    </def-macro>
+
+    <def-macro n="modify_det_gender2.n.det" npar="2"
+               c="arg.1: noun, arg.2: determiner">
+      <choose>
+        <when>
+          <test><and>
+            <not><equal><clip pos="1" part="gen"/><lit v=""/></equal></not>
+            <not><equal><clip pos="1" part="nbr"/><lit-tag v="pl"/></equal></not>
+            <not><equal><clip pos="2" part="nbr"/><lit-tag v="pl"/></equal></not>
+          </and></test>
+          <let><clip pos="2" part="gen"/><clip pos="1" part="gen"/></let>
+        </when>
+      </choose>
+    </def-macro>
+
+    <def-macro n="set_ana" npar="1"
+               c="arg.1: noun. Set vars for for later use by modify_pp_gender">
+      <choose>
+        <when>
+          <test><and>
+            <equal><clip pos="1" part="nbr"/><lit-tag v="sg"/></equal>
+            <or>
+              <equal><clip pos="1" part="gen"/><lit-tag v="mf"/></equal>
+              <equal><clip pos="1" part="gen"/><lit-tag v="m"/></equal>
+              <equal><clip pos="1" part="gen"/><lit-tag v="f"/></equal>
+              <equal><clip pos="1" part="gen"/><lit-tag v="nt"/></equal>
+            </or>
+          </and></test>
+          <let><var n="ana_nbr"/><clip pos="1" part="nbr"/></let>
+          <let><var n="ana_gen"/><clip pos="1" part="gen"/></let>
+          <choose><when>
+            <test><or>
+              <equal><var n="ana_gen"/><lit-tag v="f"/></equal>
+              <equal><var n="ana_gen"/><lit-tag v="m"/></equal>
+            </or></test>
+            <let><var n="ana_gen"/><lit-tag v="mf"/></let>
+          </when></choose>
+        </when>
+        <when>
+          <test><equal><clip pos="1" part="nbr"/><lit-tag v="pl"/></equal></test>
+          <let><var n="ana_nbr"/><clip pos="1" part="nbr"/></let>
+          <let><var n="ana_gen"/><lit v=""/></let>
+        </when>
+      </choose>
+    </def-macro>
+    <def-macro n="modify_pp_gen_nbr" npar="1"
+               c="arg.1: adj.pp / vblex.pp
+                  Assumes set_ana only sets variable combinations that are OK for adj.pp's">
+      <choose><when>
+        <test><equal><clip pos="1" part="tags"/><lit-tag v="vblex.pp"/></equal></test>
+        <let><clip pos="1" part="tags"/><lit-tag v="adj.pp.nt.sg.ind"/></let>
+        <let><clip pos="1" part="lemh"/><lit v="adj"/></let>
+      </when></choose>
+      <choose><when>
+        <test><not><equal><var n="ana_nbr"/><lit v=""/></equal></not></test>
+        <let><clip pos="1" part="nbr"/><var n="ana_nbr"/></let>
+        <let><clip pos="1" part="gen"/><var n="ana_gen"/></let>
+      </when></choose>
+      <choose><when>
+        <test><equal><clip pos="1" part="nbr"/><lit-tag v="pl"/></equal></test>
+        <let><clip pos="1" part="art"/><lit v=""/></let>
+      </when></choose>
+    </def-macro>
+
+    <def-macro n="set_n_defness" npar="2"
+               c="arg.1: noun, arg.2: determiner
+                  Make sure we have double definiteness marking, eg.:
+                  disse.def friheter.ind => desse.def fridomane.def
+                  Check that numbers don't mismatch to protect from certain mis-taggings.">
+      <choose>
+        <when>
+          <test>
+            <and>
+              <equal><clip pos="1" part="art"/><lit-tag v="ind"/></equal>
+              <equal caseless="yes"><clip pos="2" part="lemh"/><lit v="detdd"/></equal>
+              <not><or>
+                <and><equal><clip pos="1" part="nbr"/><lit-tag v="pl"/></equal>
+                     <equal><clip pos="2" part="nbr"/><lit-tag v="sg"/></equal></and>
+                <and><equal><clip pos="2" part="nbr"/><lit-tag v="pl"/></equal>
+                     <equal><clip pos="1" part="nbr"/><lit-tag v="sg"/></equal></and>
+              </or></not>
+            </and>
+          </test>
+          <let><clip pos="1" part="art"/><lit-tag v="def"/></let>
+        </when>
+      </choose>
+    </def-macro>
+
+    <!-- Output macros: -->
+    <def-macro n="out_det_when_adjlike" npar="2"
+               c="arg.1: adj_n or det chunk, arg.2: gives typographic case to adj/det
+                  Outputs a space afterwards.">
+      <call-macro n="set_det_gender1.n"><with-param pos="1"/></call-macro>
+      <choose><when>
+        <test><or>
+          <begins-with caseless="yes"><clip pos="1" part="lemh"/><lit v="adj"/></begins-with>
+          <begins-with caseless="yes"><clip pos="1" part="tags"/><lit-tag v="det.qnt"/></begins-with>
+        </or></test>
+        <out>
+          <chunk>
+            <get-case-from pos="1"><lit v="det"/></get-case-from>
+            <lit-tag v="det.dem"/>
+            <var n="det_gender"/>
+            <var n="number_no_sp"/>
+            <lit v="{^"/>
+            <get-case-from pos="1"><lit v="den"/></get-case-from>
+            <lit-tag v="det.dem"/>
+            <var n="det_gender"/>
+            <var n="number_no_sp"/>
+            <lit v="$}"/>
+          </chunk>
+          <b/>
+        </out>
+        <let><clip pos="1" part="lemh"/><get-case-from pos="2"><clip pos="1" part="lemh"/></get-case-from></let>
+      </when></choose>
+    </def-macro>
+
+    <def-macro n="out_ndef" npar="2"
+               c="arg.1: possessed noun, arg.2: gives typographic case
+                  Strip case, add definiteness.">
+      <call-macro n="get_case_from_detpos">
+        <with-param pos="1"/>
+        <with-param pos="2"/>
+      </call-macro>
+      <let><clip pos="1" part="art"/><lit-tag v="def"/></let>
+      <out>
+        <chunk><clip pos="1" part="whole"/></chunk>
+      </out>
+    </def-macro>
+
+    <def-macro n="out_sin" npar="1"
+               c="arg.1: noun (possessor)">
+      <call-macro n="set_det_gender1.n"><with-param pos="1"/></call-macro>
+      <out><chunk>
+        <lit v="det"/>
+        <var n="det_gender"/>
+        <var n="number_no_sp"/>
+        <lit v="{^sin"/>
+        <lit-tag v="det.pos"/>
+        <var n="det_gender"/>
+        <var n="number_no_sp"/>
+        <lit v="$}"/>
+      </chunk></out>
+    </def-macro>
+
+  </section-def-macros>
+
+
+  <section-rules>
+
+    <!-- AUX PART rules -->
+
+    <rule comment="INFM INFAUX ADJPART => INFM INFAUX ADJPART
+                   å leses => å bli lest
+                   Infinitive passives with an infinitive marker should keep the auxiliary.
+                   Overrides below aux-deleting rule below (no infm => no aux needed)">
+      <pattern>
+        <pattern-item n="infm"/>
+        <pattern-item n="infaux"/>
+        <pattern-item n="adjpart"/>
+      </pattern>
+      <action>
+        <out>
+          <chunk>
+            <clip pos="1" part="whole"/>
+          </chunk>
+          <b />
+          <chunk>
+            <clip pos="2" part="whole"/>
+          </chunk>
+          <b />
+          <chunk>
+            <clip pos="3" part="whole"/>
+          </chunk>
+        </out>
+      </action>
+    </rule>
+    <rule comment="INFM ADV INFAUX => INFM ADV INFAUX ADJPART">
+      <pattern>
+        <pattern-item n="infm"/>
+        <pattern-item n="adv"/>
+        <pattern-item n="infaux"/>
+        <pattern-item n="adjpart"/>
+      </pattern>
+      <action>
+        <out>
+          <chunk>
+            <clip pos="1" part="whole"/>
+          </chunk>
+          <b />
+          <chunk>
+            <clip pos="2" part="whole"/>
+          </chunk>
+          <b />
+          <chunk>
+            <clip pos="3" part="whole"/>
+          </chunk>
+          <b />
+          <chunk>
+            <clip pos="4" part="whole"/>
+          </chunk>
+        </out>
+      </action>
+    </rule>
+    <rule comment="INFM ADV ADV INFAUX ADJPART => INFM ADV ADV INFAUX ADJPART">
+      <pattern>
+        <pattern-item n="infm"/>
+        <pattern-item n="adv"/>
+        <pattern-item n="adv"/>
+        <pattern-item n="infaux"/>
+        <pattern-item n="adjpart"/>
+      </pattern>
+      <action>
+        <out>
+          <chunk>
+            <clip pos="1" part="whole"/>
+          </chunk>
+          <b />
+          <chunk>
+            <clip pos="2" part="whole"/>
+          </chunk>
+          <b />
+          <chunk>
+            <clip pos="3" part="whole"/>
+          </chunk>
+          <b />
+          <chunk>
+            <clip pos="4" part="whole"/>
+          </chunk>
+          <b />
+          <chunk>
+            <clip pos="5" part="whole"/>
+          </chunk>
+        </out>
+      </action>
+    </rule>
+
+    <rule comment="INFAUX ADJPART => VBLEXPASS
+                   [kan] leses => [kan] bli lest => [kan] lesast
+                   Delete aux.
+
+                   If we have infinitive without an infinitive marker, there's probably a modal
+                   somewhere and we can keep the original nynorsk passive form.">
+      <pattern>
+        <pattern-item n="infaux"/>
+        <pattern-item n="single-adjpart"/>
+      </pattern>
+      <action>
+        <call-macro n="modify_pp_gen_nbr"><with-param pos="2"/></call-macro>
+        <choose><when>
+          <test><equal><clip pos="1" part="voice"/><lit v=""/></equal></test>
+          <let><clip pos="1" part="temps"/><concat><clip pos="1" part="temps"/><lit-tag v="pasv"/></concat></let>
+        </when></choose>
+        <out>
+          <chunk>
+            <get-case-from pos="1"><lit v="adj2vblex"/></get-case-from>
+            <clip pos="1" part="tags"/>
+            <clip pos="2" part="chcontent"/>
+            <clip pos="2" part="lemq"/>
+          </chunk>
+        </out>
+      </action>
+    </rule>
+
+
+    <!-- AUXPASS ADJPART ADV* => AUXPASS ADV* ADJPART ADV*
+         and AUX ADV* ADJPART => AUX ADV* ADJPART rules -->
+
+    <rule comment="AUX ADJPART => AUX ADJPART">
+      <pattern>
+        <pattern-item n="aux"/>
+        <pattern-item n="adjpart"/>
+      </pattern>
+      <action>
+        <call-macro n="modify_pp_gen_nbr"><with-param pos="2"/></call-macro>
+        <out>
+          <chunk>
+            <clip pos="1" part="whole"/>
+          </chunk>
+          <b />
+          <chunk>
+            <clip pos="2" part="whole"/>
+          </chunk>
+        </out>
+      </action>
+    </rule>
+    <rule comment="AUXPASS ADJPART ADV => AUXPASS ADV ADJPART
+                   boken leses ofte =1> boka blir lest ofte =2> boka blir ofte lest
+                   auxpass are created in t1x; move adv's behind these
+                   (No match if the aux was there originally, then we don't move any adverbs)">
+      <pattern>
+        <pattern-item n="auxpass"/>
+        <pattern-item n="adjpart"/>
+        <pattern-item n="adv"/>
+      </pattern>
+      <action>
+        <call-macro n="modify_pp_gen_nbr"><with-param pos="2"/></call-macro>
+        <out>
+          <chunk>
+            <clip pos="1" part="whole"/>
+          </chunk>
+          <b />
+          <chunk>
+            <clip pos="3" part="whole"/>
+          </chunk>
+          <b />
+          <chunk>
+            <clip pos="2" part="whole"/>
+          </chunk>
+        </out>
+      </action>
+    </rule>
+    <rule comment="AUXPASS ADJPART LEMQ ADV => AUXPASS ADV ADJPART LEMQ
+                   påberopes ofte =1> vert skulda på ofte =2> vert ofte skulda på
+                   auxpass are created in t1x; move adv's behind these
+                   (No match if the aux was there originally, then we don't move any adverbs)">
+      <pattern>
+        <pattern-item n="auxpass"/>
+        <pattern-item n="adjpart"/>
+        <pattern-item n="lemq"/>
+        <pattern-item n="adv"/>
+      </pattern>
+      <action>
+        <call-macro n="modify_pp_gen_nbr"><with-param pos="2"/></call-macro>
+        <out>
+          <chunk>
+            <clip pos="1" part="whole"/>
+          </chunk>
+          <b />
+          <b />
+          <chunk>
+            <clip pos="4" part="whole"/>
+          </chunk>
+          <b />
+          <chunk>
+            <clip pos="2" part="whole"/>
+          </chunk>
+          <chunk>
+            <clip pos="3" part="whole"/>
+          </chunk>
+        </out>
+      </action>
+    </rule>
+    <rule comment="AUXPASS ADJPART ADV ADV => AUXPASS ADV ADV ADJPART
+                   boken leses heller ofte =1> boka blir lest heller ofte =2> boka blir heller ofte lest
+                   auxpass are created in t1x; move adv's behind these
+                   (No match if the aux was there originally, then we don't move any adverbs)">
+      <pattern>
+        <pattern-item n="auxpass"/>
+        <pattern-item n="adjpart"/>
+        <pattern-item n="adv"/>
+        <pattern-item n="adv"/>
+      </pattern>
+      <action>
+        <call-macro n="modify_pp_gen_nbr"><with-param pos="2"/></call-macro>
+        <out>
+          <chunk>
+            <clip pos="1" part="whole"/>
+          </chunk>
+          <b />
+          <chunk>
+            <clip pos="3" part="whole"/>
+          </chunk>
+          <b />
+          <chunk>
+            <clip pos="4" part="whole"/>
+          </chunk>
+          <b />
+          <chunk>
+            <clip pos="2" part="whole"/>
+          </chunk>
+        </out>
+      </action>
+    </rule>
+    <rule comment="AUXPASS ADJPART LEMQ ADV ADV => AUXPASS ADV ADV ADJPART LEMQ
+                   påberopes heller ofte =1> vert skulda på heller ofte =2> vert heller ofte skulda på
+                   auxpass are created in t1x; move adv's behind these
+                   (No match if the aux was there originally, then we don't move any adverbs)">
+      <pattern>
+        <pattern-item n="auxpass"/>
+        <pattern-item n="adjpart"/>
+        <pattern-item n="lemq"/>
+        <pattern-item n="adv"/>
+        <pattern-item n="adv"/>
+      </pattern>
+      <action>
+        <call-macro n="modify_pp_gen_nbr"><with-param pos="2"/></call-macro>
+        <out>
+          <chunk>
+            <clip pos="1" part="whole"/>
+          </chunk>
+          <b />
+          <b />
+          <chunk>
+            <clip pos="4" part="whole"/>
+          </chunk>
+          <b />
+          <chunk>
+            <clip pos="5" part="whole"/>
+          </chunk>
+          <b />
+          <chunk>
+            <clip pos="2" part="whole"/>
+          </chunk>
+          <chunk>
+            <clip pos="3" part="whole"/>
+          </chunk>
+        </out>
+      </action>
+    </rule>
+    <rule comment="AUX ADV ADJPART => AUX ADV ADJPART
+                   boken ble ofte lest =1> boka vart ofte lesen =2> boka vart ofte lesen">
+      <pattern>
+        <pattern-item n="aux"/>
+        <pattern-item n="adv"/>
+        <pattern-item n="adjpart"/>
+      </pattern>
+      <action>
+        <call-macro n="modify_pp_gen_nbr"><with-param pos="3"/></call-macro>
+        <out>
+          <chunk>
+            <clip pos="1" part="whole"/>
+          </chunk>
+          <b />
+          <chunk>
+            <clip pos="2" part="whole"/>
+          </chunk>
+          <b />
+          <chunk>
+            <clip pos="3" part="whole"/>
+          </chunk>
+        </out>
+      </action>
+    </rule>
+    <rule comment="AUX ADV ADV ADJPART => AUX ADV ADV ADJPART
+                   boken ble heller ofte lest =1> boka vart heller ofte lesen =2> boka vart heller ofte lesen">
+      <pattern>
+        <pattern-item n="aux"/>
+        <pattern-item n="adv"/>
+        <pattern-item n="adv"/>
+        <pattern-item n="adjpart"/>
+      </pattern>
+      <action>
+        <call-macro n="modify_pp_gen_nbr"><with-param pos="4"/></call-macro>
+        <out>
+          <chunk>
+            <clip pos="1" part="whole"/>
+          </chunk>
+          <b />
+          <chunk>
+            <clip pos="2" part="whole"/>
+          </chunk>
+          <b />
+          <chunk>
+            <clip pos="3" part="whole"/>
+          </chunk>
+          <b />
+          <chunk>
+            <clip pos="4" part="whole"/>
+          </chunk>
+        </out>
+      </action>
+    </rule>
+
+
+
+    <rule comment="AUXPASS ADJPART NDEF DETPOS => AUXPASS NDEF DETPOS ADJPART
+                   reguleres bøkene dine =1> blir regulert bøkene dine =2> blir bøkene dine regulerte
+                   auxpass are created in t1x
+                   (No match if the aux was there originally, then we don't move anything)">
+      <pattern>
+        <pattern-item n="auxpass"/>
+        <pattern-item n="adjpart"/>
+        <pattern-item n="ndef"/>
+        <pattern-item n="detpos"/>
+      </pattern>
+      <action>
+        <call-macro n="set_ana"><with-param pos="3"/></call-macro>
+        <call-macro n="modify_pp_gen_nbr"><with-param pos="2"/></call-macro>
+        <out>
+          <chunk>
+            <clip pos="1" part="whole"/>
+          </chunk>
+          <b />
+          <chunk>
+            <clip pos="3" part="whole"/>
+          </chunk>
+          <b />
+          <chunk>
+            <clip pos="4" part="whole"/>
+          </chunk>
+          <b />
+          <chunk>
+            <clip pos="2" part="whole"/>
+          </chunk>
+        </out>
+      </action>
+    </rule>
+    <rule comment="AUXPASS ADJPART NDEF => AUXPASS NDEF ADJPART
+                   reguleres bøkene =1> blir regulert bøkene =2> blir bøkene regulert
+                   auxpass are created in t1x
+                   (No match if the aux was there originally, then we don't move anything)">
+      <pattern>
+        <pattern-item n="auxpass"/>
+        <pattern-item n="adjpart"/>
+        <pattern-item n="ndef"/>
+      </pattern>
+      <action>
+        <call-macro n="set_ana"><with-param pos="3"/></call-macro>
+        <call-macro n="modify_pp_gen_nbr"><with-param pos="2"/></call-macro>
+        <out>
+          <chunk>
+            <clip pos="1" part="whole"/>
+          </chunk>
+          <b />
+          <chunk>
+            <clip pos="3" part="whole"/>
+          </chunk>
+          <b />
+          <chunk>
+            <clip pos="2" part="whole"/>
+          </chunk>
+        </out>
+      </action>
+    </rule>
+
+
+    <rule comment="VBLEX LEMQ => VBLEX LEMQ">
+      <pattern>
+        <pattern-item n="vblex"/>
+        <pattern-item n="lemq"/>
+      </pattern>
+      <action>
+        <out>
+          <chunk>
+            <clip pos="1" part="whole"/>
+          </chunk>
+          <b />
+          <chunk>
+            <clip pos="2" part="whole"/>
+          </chunk>
+        </out>
+      </action>
+    </rule>
+    <rule comment="VBLEX LEMQ ADV => VBLEX ADV LEMQ
+                   Push blanks one place up since lemq space is inside the chunk.">
+      <pattern>
+        <pattern-item n="vblex"/>
+        <pattern-item n="lemq"/>
+        <pattern-item n="adv"/>
+      </pattern>
+      <action>
+        <out>
+          <chunk>
+            <clip pos="1" part="whole"/>
+          </chunk>
+          <b />
+          <b />
+          <chunk>
+            <clip pos="3" part="whole"/>
+          </chunk>
+          <chunk>
+            <clip pos="2" part="whole"/>
+          </chunk>
+        </out>
+      </action>
+    </rule>
+    <rule comment="VBLEX LEMQ ADV ADV => VBLEX ADV ADV LEMQ
+                   Push blanks one place up since lemq space is inside the chunk.">
+      <pattern>
+        <pattern-item n="vblex"/>
+        <pattern-item n="lemq"/>
+        <pattern-item n="adv"/>
+        <pattern-item n="adv"/>
+      </pattern>
+      <action>
+        <out>
+          <chunk>
+            <clip pos="1" part="whole"/>
+          </chunk>
+          <b />
+          <b />
+          <chunk>
+            <clip pos="3" part="whole"/>
+          </chunk>
+          <b />
+          <chunk>
+            <clip pos="4" part="whole"/>
+          </chunk>
+          <chunk>
+            <clip pos="2" part="whole"/>
+          </chunk>
+        </out>
+      </action>
+    </rule>
+
+
+
+    <!-- Possessive noun phrases -->
+
+
+    <!-- The regular possessive noun phrases, with more complex
+         transfer operations.-->
+    <rule comment="PREP_GEN NGEN: [til] mannens => mannen sin
+                   Very heuristic fallback rule.
+                   If we can't match with the below rules, turn the
+                   genitive -s into 'sin' garpegenitiv instead.
+                   (Removing the prep_gen from t1x)
+                   A bit more fluent where eg. input is incomplete:
+                         mannens *sykkel => mannen sin *sykkel
+                   But we don't know gen/nbr of object, so we could end
+                   up with
+                         mannens *sykler => mannen sin *sykler
+                   So let's just hope plurals possess plurals etc...">
+      <pattern>
+        <pattern-item n="prep_gen"/>
+        <pattern-item n="ngen"/>
+      </pattern>
+      <action>
+        <call-macro n="set_ana"><with-param pos="2"/></call-macro>
+        <out>
+          <chunk>
+          <clip pos="2" part="whole"/>
+          </chunk>
+          <b />
+        </out>
+        <call-macro n="out_sin"><with-param pos="2"/></call-macro>
+      </action>
+    </rule>
+    <rule comment="PREP_GEN DET: [til] det => det sin
+                   Fallback, like above">
+      <pattern>
+        <pattern-item n="prep_gen"/>
+        <pattern-item n="det"/>
+      </pattern>
+      <action>
+        <out>
+          <chunk>
+          <clip pos="2" part="whole"/>
+          </chunk>
+          <b />
+        </out>
+        <call-macro n="out_sin"><with-param pos="2"/></call-macro>
+      </action>
+    </rule>
+    <rule comment="DETNONPOS PREP_GEN NGEN: det [til] forfatterskapets => den forfattarskapen sin">
+      <pattern>
+        <pattern-item n="detnonpos"/>
+        <pattern-item n="prep_gen"/>
+        <pattern-item n="ngen"/>
+      </pattern>
+      <action>
+        <call-macro n="set_ana"><with-param pos="3"/></call-macro>
+        <call-macro n="modify_det_gender2.n.det"><with-param pos="3"/><with-param pos="1"/></call-macro>
+        <out>
+          <chunk>
+            <clip pos="1" part="whole"/>
+          </chunk>
+          <b />
+          <chunk>
+            <clip pos="3" part="whole"/>
+          </chunk>
+          <b/>
+        </out>
+        <call-macro n="out_sin"><with-param pos="3"/></call-macro>
+      </action>
+    </rule>
+    <rule comment="NDEF: (lille) mennesket => (vesle) mennesket
+                   Used to output a determiner with out_det_when_adj, but this lead to
+                   some odd problems.">
+      <pattern>
+        <pattern-item n="ndef"/>
+      </pattern>
+      <action>
+        <call-macro n="set_ana"><with-param pos="1"/></call-macro>
+        <call-macro n="modify_case_detpos"><with-param pos="1"/><with-param pos="1"/></call-macro>
+        <out>
+          <chunk>
+            <clip pos="1" part="whole"/>
+          </chunk>
+        </out>
+      </action>
+    </rule>
+
+    <rule comment="PREP_GEN NGEN NIND: naboens bil => bilen til naboen
+                              naboens røde bil => den røde bilen til naboen
+                   nind makes sure we don't match 'min Per(np)' nor 'min bils(gen)'">
+      <pattern>
+        <pattern-item n="prep_gen"/>
+        <pattern-item n="ngen"/>
+        <pattern-item n="nind"/>
+      </pattern>
+      <action>
+        <call-macro n="set_ana"><with-param pos="3"/></call-macro>
+        <call-macro n="switch_cases"><with-param pos="3"/><with-param pos="2"/></call-macro>
+
+        <call-macro n="out_det_when_adjlike"><with-param pos="3"/><with-param pos="2"/></call-macro>
+        <call-macro n="out_ndef"><with-param pos="3"/><with-param pos="2"/></call-macro>
+        <out>
+          <b />
+          <chunk><clip pos="1" part="whole"/></chunk>
+          <b />
+          <chunk><clip pos="2" part="whole"/></chunk>
+        </out>
+      </action>
+    </rule>
+
+    <rule comment="UNKNOWN sin NIND: *alfdj sin måte => *alfdj sin måte
+                   Override the below rule">
+      <pattern>
+        <pattern-item n="unknown"/>
+        <pattern-item n="sin"/>
+        <pattern-item n="nind"/>
+      </pattern>
+      <action>
+        <out>
+          <chunk><clip pos="1" part="whole"/></chunk>
+          <b />
+          <chunk><clip pos="2" part="whole"/></chunk>
+          <b />
+          <chunk><clip pos="3" part="whole"/></chunk>
+        </out>
+      </action>
+    </rule>
+    <rule comment="DETPOS NIND: min mor => mora mi
+                                ditt hus => huset ditt
+                   nind makes sure we don't match 'min Per(np)' nor 'min bils(gen)'
+                   Second example shows how determiners ..um..determine number.">
+      <pattern>
+        <pattern-item n="detpos"/>
+        <pattern-item n="nind"/>
+      </pattern>
+      <action>
+        <call-macro n="set_ana"><with-param pos="2"/></call-macro>
+        <call-macro n="switch_cases"><with-param pos="2"/><with-param pos="1"/></call-macro>
+
+        <call-macro n="out_det_when_adjlike"><with-param pos="2"/><with-param pos="1"/></call-macro>
+        <call-macro n="out_ndef"><with-param pos="2"/><with-param pos="1"/></call-macro>
+
+        <call-macro n="modify_det_gender2.n.det"><with-param pos="2"/><with-param pos="1"/></call-macro>
+        <out>
+          <b />
+          <chunk><clip pos="1" part="whole"/></chunk>
+        </out>
+      </action>
+    </rule>
+
+
+    <rule comment="PREP_GEN NGEN PREP_GEN NGEN NIND: [på] kjøkkenets [til] katts snute => snuten til katten på kjøkkenet">
+      <pattern>
+        <pattern-item n="prep_gen"/>
+        <pattern-item n="ngen"/>
+        <pattern-item n="prep_gen"/>
+        <pattern-item n="ngen"/>
+	<pattern-item n="nind"/>
+      </pattern>
+      <action>
+        <call-macro n="set_ana"><with-param pos="5"/></call-macro>
+        <call-macro n="switch_cases"><with-param pos="5"/><with-param pos="2"/></call-macro>
+
+        <call-macro n="out_det_when_adjlike"><with-param pos="5"/><with-param pos="1"/></call-macro>
+        <call-macro n="out_ndef"><with-param pos="5"/><with-param pos="2"/></call-macro>
+
+        <out>
+          <b />
+          <chunk><clip pos="3" part="whole"/></chunk>
+          <b />
+        </out>
+        <call-macro n="out_det_when_adjlike"><with-param pos="4"/><with-param pos="4"/></call-macro>
+        <call-macro n="out_ndef"><with-param pos="4"/><with-param pos="4"/></call-macro>
+        <out>
+          <b />
+          <chunk><clip pos="1" part="whole"/></chunk>
+          <b />
+        </out>
+        <call-macro n="out_det_when_adjlike"><with-param pos="2"/><with-param pos="2"/></call-macro>
+        <out>
+          <chunk><clip pos="2" part="whole"/></chunk>
+        </out>
+      </action>
+    </rule>
+    <rule comment="DETPOS PREP_GEN NGEN NIND: min [til] katts snute => snuten til katten min
+                                     (but not *'min din snute')">
+      <pattern>
+	<pattern-item n="detpos"/>
+        <pattern-item n="prep_gen"/>
+        <pattern-item n="ngen"/>
+	<pattern-item n="nind"/>
+      </pattern>
+      <action>
+        <call-macro n="set_ana"><with-param pos="4"/></call-macro>
+        <call-macro n="switch_cases"><with-param pos="4"/><with-param pos="1"/></call-macro>
+
+        <call-macro n="out_det_when_adjlike"><with-param pos="4"/><with-param pos="1"/></call-macro>
+        <call-macro n="out_ndef"><with-param pos="4"/><with-param pos="1"/></call-macro>
+
+        <out>
+          <b />
+          <chunk><clip pos="2" part="whole"/></chunk>
+          <b />
+        </out>
+        <call-macro n="out_det_when_adjlike"><with-param pos="3"/><with-param pos="3"/></call-macro>
+        <call-macro n="out_ndef"><with-param pos="3"/><with-param pos="3"/></call-macro>
+
+        <call-macro n="modify_det_gender2.n.det"><with-param pos="3"/><with-param pos="1"/></call-macro>
+        <out>
+          <b />
+          <chunk><clip pos="1" part="whole"/></chunk>
+        </out>
+      </action>
+    </rule>
+
+
+    <rule comment="PREP_GEN NGEN DETNONPOS NIND:
+                   toppens mange hunder =1> på toppen mange hunder =2> dei mange hundane på toppen
+                   nind makes sure we don't match 'min Per(np)' nor 'min bils(gen)'">
+      <pattern>
+        <pattern-item n="prep_gen"/>
+        <pattern-item n="ngen"/>
+        <pattern-item n="detnonpos"/>
+        <pattern-item n="nind"/>
+      </pattern>
+      <action>
+        <call-macro n="set_ana"><with-param pos="4"/></call-macro>
+        <call-macro n="switch_cases"><with-param pos="3"/><with-param pos="2"/></call-macro>
+
+        <call-macro n="out_det_when_adjlike"><with-param pos="3"/><with-param pos="2"/></call-macro>
+        <out>
+          <chunk><clip pos="3" part="whole"/></chunk>
+          <b />
+        </out>
+        <call-macro n="out_ndef"><with-param pos="4"/><with-param pos="4"/></call-macro>
+        <out>
+          <b />
+          <chunk><clip pos="1" part="whole"/></chunk>
+          <b />
+          <chunk><clip pos="2" part="whole"/></chunk>
+        </out>
+      </action>
+    </rule>
+    <rule comment="DETNONPOS PREP_GEN NGEN NIND: en [til] katts snute => snuten til ein katt">
+      <pattern>
+	<pattern-item n="detnonpos"/>
+	<pattern-item n="prep_gen"/>
+	<pattern-item n="ngen"/>
+	<pattern-item n="nind"/>
+      </pattern>
+      <action>
+        <call-macro n="set_ana"><with-param pos="4"/></call-macro>
+        <call-macro n="switch_cases"><with-param pos="4"/><with-param pos="1"/></call-macro>
+        <call-macro n="out_det_when_adjlike"><with-param pos="4"/><with-param pos="1"/></call-macro>
+        <call-macro n="out_ndef"><with-param pos="4"/><with-param pos="1"/></call-macro>
+
+        <call-macro n="modify_det_gender2.n.det"><with-param pos="3"/><with-param pos="1"/></call-macro>
+        <out>
+          <b />
+          <chunk><clip pos="2" part="whole"/></chunk>
+          <b />
+          <chunk><clip pos="1" part="whole"/></chunk>
+          <b />
+          <chunk><clip pos="3" part="whole"/></chunk>
+        </out>
+      </action>
+    </rule>
+    <rule comment="DETNONPOS DETNONPOS PREP_GEN NGEN NIND: den forrige [til] Lamaens bil => bilen til den forrige Lamaen">
+      <pattern>
+	<pattern-item n="detnonpos"/>
+	<pattern-item n="detnonpos"/>
+	<pattern-item n="prep_gen"/>
+	<pattern-item n="ngen"/>
+	<pattern-item n="nind"/>
+      </pattern>
+      <action>
+        <call-macro n="set_ana"><with-param pos="5"/></call-macro>
+        <call-macro n="switch_cases"><with-param pos="5"/><with-param pos="1"/></call-macro>
+
+        <call-macro n="out_det_when_adjlike"><with-param pos="5"/><with-param pos="1"/></call-macro>
+        <call-macro n="out_ndef"><with-param pos="5"/><with-param pos="1"/></call-macro>
+
+        <call-macro n="modify_det_gender2.n.det"><with-param pos="4"/><with-param pos="1"/></call-macro>
+        <call-macro n="modify_det_gender2.n.det"><with-param pos="4"/><with-param pos="2"/></call-macro>
+        <out>
+          <b />
+          <chunk><clip pos="3" part="whole"/></chunk>
+          <b />
+          <chunk><clip pos="1" part="whole"/></chunk>
+          <b />
+          <chunk><clip pos="2" part="whole"/></chunk>
+          <b />
+          <chunk><clip pos="4" part="whole"/></chunk>
+        </out>
+      </action>
+    </rule>
+
+    <rule comment="NDEF DETPOS: jenten min => jenta mi">
+      <pattern>
+        <pattern-item n="ndef"/>
+        <pattern-item n="detpos"/>
+      </pattern>
+      <action>
+        <call-macro n="set_ana"><with-param pos="1"/></call-macro>
+        <call-macro n="modify_det_gender2.n.det"><with-param pos="1"/><with-param pos="2"/></call-macro>
+        <out>
+          <chunk><clip pos="1" part="whole"/></chunk>
+          <b />
+          <chunk><clip pos="2" part="whole"/></chunk>
+        </out>
+      </action>
+    </rule>
+
+    <rule comment="DET NOM: en kvinne => ei kvinne
+		            hvilken jente => kva for ei jente
+			    egne hus => eigne hus
+			    et Norge => eit Noreg
+                            dette hus => dette huset
+	           np får ikkje noko tal i den siste.">
+      <pattern>
+        <pattern-item n="det"/>
+        <pattern-item n="nom"/>
+      </pattern>
+      <action>
+        <call-macro n="set_ana"><with-param pos="2"/></call-macro>
+        <call-macro n="modify_det_gender2.n.det"><with-param pos="2"/><with-param pos="1"/></call-macro>
+        <call-macro n="set_n_defness"><with-param pos="2"/><with-param pos="1"/></call-macro>
+        <out>
+          <chunk><clip pos="1" part="whole"/></chunk>
+          <b />
+          <chunk><clip pos="2" part="whole"/></chunk>
+        </out>
+      </action>
+    </rule>
+
+    <rule comment="DETIND DETIND NIND: en annen kvinne => ei anna kvinne">
+      <pattern>
+        <pattern-item n="detind"/>
+        <pattern-item n="detind"/>
+        <pattern-item n="nind"/>
+      </pattern>
+      <action>
+        <!-- TODO: reject-current-rule in interchunk -->
+        <!-- <choose><when> -->
+        <!--   <test><or> -->
+        <!--     <and> -->
+        <!--       <equal><clip pos="1" part="gen"/><lit-tag v="nt"/></equal> -->
+        <!--       <or> -->
+        <!--         <equal><clip pos="2" part="gen"/><lit-tag v="m"/></equal> -->
+        <!--         <equal><clip pos="2" part="gen"/><lit-tag v="f"/></equal> -->
+        <!--       </or> -->
+        <!--     </and> -->
+        <!--     <and> -->
+        <!--       <or> -->
+        <!--         <equal><clip pos="1" part="gen"/><lit-tag v="m"/></equal> -->
+        <!--         <equal><clip pos="1" part="gen"/><lit-tag v="f"/></equal> -->
+        <!--       </or> -->
+        <!--       <equal><clip pos="2" part="gen"/><lit-tag v="nt"/></equal> -->
+        <!--     </and> -->
+        <!--   </or></test> -->
+        <!--   <reject-current-rule shifting="no"/> -->
+        <!-- </when></choose> -->
+        <call-macro n="set_ana"><with-param pos="3"/></call-macro>
+        <call-macro n="modify_det_gender2.n.det"><with-param pos="3"/><with-param pos="2"/></call-macro>
+        <call-macro n="modify_det_gender2.n.det"><with-param pos="3"/><with-param pos="1"/></call-macro>
+        <out>
+          <chunk><clip pos="1" part="whole"/></chunk>
+          <b />
+          <chunk><clip pos="2" part="whole"/></chunk>
+          <b />
+          <chunk><clip pos="3" part="whole"/></chunk>
+        </out>
+      </action>
+    </rule>
+
+    <rule comment="DET">
+      <pattern>
+        <pattern-item n="det"/>
+      </pattern>
+      <action>
+        <call-macro n="set_ana"><with-param pos="1"/></call-macro>
+        <out>
+          <chunk><clip pos="1" part="whole"/></chunk>
+        </out>
+      </action>
+    </rule>
+    <rule comment="PRN">
+      <pattern>
+        <pattern-item n="prn"/>
+      </pattern>
+      <action>
+        <call-macro n="set_ana"><with-param pos="1"/></call-macro>
+        <out>
+          <chunk><clip pos="1" part="whole"/></chunk>
+        </out>
+      </action>
+    </rule>
+
+  </section-rules>
+</interchunk>
