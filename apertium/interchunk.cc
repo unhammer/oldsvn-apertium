@@ -278,7 +278,7 @@ Interchunk::evalString(xmlNode *element)
           //   if(blank)
           //     return *blank[ti.getPos()];
           // }
-          return "";
+          return " ";
         }
         break;
             
@@ -335,12 +335,12 @@ Interchunk::evalString(xmlNode *element)
   {
     if(element->properties == NULL)
     {
-      evalStringCache[element] = TransferInstr(ti_b, "", -1);
+      evalStringCache[element] = TransferInstr(ti_b, " ", -1);
     }
     else
     {
       int pos = atoi((const char *) element->properties->children->content) - 1;
-      evalStringCache[element] = TransferInstr(ti_b, "", pos);
+      evalStringCache[element] = TransferInstr(ti_b, " ", pos);
     }
   }
   else if(!xmlStrcmp(element->name, (const xmlChar *) "get-case-from"))
