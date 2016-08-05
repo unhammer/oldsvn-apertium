@@ -89,6 +89,4 @@ class JoinGroupPretransferTest(PretransferTest):
 class InlineBlankPretransferTest(PretransferTest):
     inputs =          ["[{<i>}]^a<vblex><pres>+c<po># b$",          "[{<i>}]^a<vblex><pres>+c<po>+d<po># b$"]
     expectedOutputs = ["[{<i>}]^a# b<vblex><pres>$ [{<i>}]^c<po>$", "[{<i>}]^a# b<vblex><pres>$ [{<i>}]^c<po>$ [{<i>}]^d<po>$"]
-    @unittest.expectedFailure
-    def runTest(self):
-        super().runTest(self)
+

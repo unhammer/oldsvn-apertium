@@ -51,7 +51,7 @@ private:
   map<string, int, Ltstr> macros;
   map<string, set<string, Ltstr>, Ltstr> lists;
   map<string, set<string, Ltstr>, Ltstr> listslow;
-  map<wstring, wstring> word_blank;
+  // map<wstring, wstring> word_blank;
   vector<xmlNode *> macro_map;
   vector<xmlNode *> rule_map;
   xmlDoc *doc;
@@ -61,6 +61,7 @@ private:
   int lword, lblank, position, number;
   Buffer<TransferToken> input_buffer;
   vector<TransferToken *> tmpword;
+  wstring temp_super;
   // vector<wstring *> tmpblank;
   // wstring s;
 
@@ -109,7 +110,7 @@ private:
   void processInstruction(xmlNode *localroot);
   void processChoose(xmlNode *localroot);
   string processChunk(xmlNode *localroot);
-  wstring getword(wstring const &str);
+  // wstring getword(wstring const &str);
 
   bool beginsWith(string const &str1, string const &str2) const;
   bool endsWith(string const &str1, string const &str2) const;

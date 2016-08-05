@@ -6,11 +6,12 @@ sys.path.append(os.path.realpath("."))
 
 import unittest
 import transfer
+import pretransfer
 
 if __name__ == "__main__":
     os.chdir(os.path.dirname(__file__))
     failures = 0
-    for module in [transfer]:
+    for module in [transfer,pretransfer]:
     	# print module
         suite = unittest.TestLoader().loadTestsFromModule(module)
         # print suite

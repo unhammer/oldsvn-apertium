@@ -16,7 +16,7 @@ class TransferTest(unittest.TestCase):
     """Subclass and override inputs/expectedOutputs (and possibly other
 stuff) to create new pretransfer tests."""
 
-    flags = ["-z"]
+    flags = ["-n"]
     inputs = [""]
     expectedOutputs = [""]
     expectedRetCodeFail = False
