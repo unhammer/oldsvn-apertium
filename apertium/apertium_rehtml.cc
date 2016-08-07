@@ -43,7 +43,7 @@ void make_maps(string filename)
 			left = false;
 			i++;
 			index = atoi(s_index.c_str());
-			cout << "index is:" << index << endl;
+			// cout << "index is:" << index << endl;
 		}
 		else
 		{	
