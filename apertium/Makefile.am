@@ -91,7 +91,11 @@ apertium_multiple_translations_LDADD = $(APERTIUM_LIBS) -lapertium$(GENERIC_MAJO
 apertium_destxt_SOURCES = apertium_destxt.cc
 apertium_retxt_SOURCES = apertium_retxt.cc
 apertium_deshtml_SOURCES = apertium_deshtml.cc
+apertium_deshtml_LDADD = $(APERTIUM_LIBS) -lapertium$(GENERIC_MAJOR_VERSION)
+
 apertium_rehtml_SOURCES = apertium_rehtml.cc
+apertium_rehtml_LDADD = $(APERTIUM_LIBS) -lapertium$(GENERIC_MAJOR_VERSION)
+
 apertium_rehtml_noent_SOURCES = apertium_rehtml_noent.cc
 apertium_desxpresstag_SOURCES = apertium_desxpresstag.cc
 apertium_rexpresstag_SOURCES = apertium_rexpresstag.cc
@@ -115,6 +119,7 @@ apertium_postlatex_SOURCES = apertium_postlatex.cc
 apertium_postlatex_LDADD= $(APERTIUM_LIBS) -lapertium$(GENERIC_MAJOR_VERSION)
 apertium_postlatex_raw_SOURCES = apertium_postlatex_raw.cc
 apertium_postlatex_raw_LDADD= $(APERTIUM_LIBS) -lapertium$(GENERIC_MAJOR_VERSION)
+
 
 apertium_tagger_SOURCES = apertium_tagger.cc
 apertium_tagger_LDADD = $(APERTIUM_LIBS) -lapertium$(GENERIC_MAJOR_VERSION)
@@ -199,15 +204,10 @@ apertium_retxt.cc: txt-format.xml Makefile.am reformat.xsl
 	$(FLEX) -Cfer -o$@ $@tmp
 	rm $@tmp
 
-apertium_deshtml.cc: html-format.xml Makefile.am deformat.xsl
-	$(XSLTPROC) deformat.xsl html-format.xml >$@tmp
-	$(FLEX) -Cfer -o$@ $@tmp
-	rm $@tmp
+apertium_deshtml.cc: Makefile.am
 
-apertium_rehtml.cc: html-format.xml Makefile.am reformat.xsl
-	$(XSLTPROC) reformat.xsl html-format.xml >$@tmp
-	$(FLEX) -Cfer -o$@ $@tmp
-	rm $@tmp
+
+apertium_rehtml.cc: Makefile.am
 
 apertium_rehtml_noent.cc: html-noent-format.xml Makefile.am reformat.xsl
 	$(XSLTPROC) reformat.xsl html-noent-format.xml >$@tmp
