@@ -441,7 +441,7 @@ int main(int argc, char **argv)
     char mystring [100];
     FILE *fp;
     fp = fopen("input.xml","w+b");
-    while(fgets(mystring,100,stdin) != NULL)
+    while(fgets(mystring,100,input) != NULL)
     {
     	fputs(mystring,fp);
     }
@@ -451,7 +451,6 @@ int main(int argc, char **argv)
 	if (doc == NULL) {
 		printf("error: could not parse file %s\n", argv[1]);
 	}
-
   }
   else if ((argc-optind+1) == 2)
   {
@@ -460,8 +459,17 @@ int main(int argc, char **argv)
     {
       usage(argv[0]);
     }
+    char mystring [100];
+    FILE *fp;
+    fp = fopen("input.xml","w+b");
+    while(fgets(mystring,100,input) != NULL)
+    {
+    	fputs(mystring,fp);
+    }
+    fclose(fp);
+    doc = xmlReadFile("input.xml", NULL, 0);
+    
     output = stdout;
-    doc = xmlReadFile(argv[argc-1],NULL,0);
 	if (doc == NULL) {
 		printf("error: could not parse file %s\n", argv[1]);
 	}
@@ -475,16 +483,19 @@ int main(int argc, char **argv)
     {
       usage(argv[0]);
     }
-    doc = xmlReadFile(argv[argc-2],NULL,0);
+    char mystring [100];
+    FILE *fp;
+    fp = fopen("input.xml","w+b");
+    while(fgets(mystring,100,input) != NULL)
+    {
+    	fputs(mystring,fp);
+    }
+    fclose(fp);
+    doc = xmlReadFile("input.xml", NULL, 0);
+
 	if (doc == NULL) {
 		printf("error: could not parse file %s\n", argv[1]);
 	}
-  }
-
-  if(feof(input))
-  {
-    wcerr << L"ERROR: Can't read file '" << argv[1] << L"'" << endl;
-    exit(EXIT_FAILURE);
   }
 
 #ifdef _MSC_VER
