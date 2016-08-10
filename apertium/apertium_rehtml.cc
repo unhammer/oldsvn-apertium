@@ -31,7 +31,7 @@ void make_maps(string filename)
 	bool left = true;
 	int i = 0;
 	int index;
-	cout << str << endl;
+	// outfile << str << endl;
 	while(i < l)
 	{	
 		if(left)
@@ -43,7 +43,7 @@ void make_maps(string filename)
 			left = false;
 			i++;
 			index = atoi(s_index.c_str());
-			// cout << "index is:" << index << endl;
+			// outfile << "index is:" << index << endl;
 		}
 		else
 		{	
@@ -77,7 +77,7 @@ bool is_blank(char ch)
 }
 
 
-void empty_stack(stack<int> &mystack)
+void empty_stack(stack<int> &mystack, ofstream &outfile)
 {
 	stack<int> temp;
 	while(!mystack.empty())
@@ -87,7 +87,7 @@ void empty_stack(stack<int> &mystack)
 	}
 	while(!temp.empty())
 	{	
-		cout << closing_tags[temp.top()];
+		outfile << closing_tags[temp.top()];
 		temp.pop();
 	}
 }
@@ -100,6 +100,7 @@ void usage(char *progname)
 
 int main(int argc, char **argv)
 {	
+	ofstream outfile ("reformated.txt");
 	string str;
 	make_maps("tags_data.txt");
 
@@ -178,7 +179,7 @@ int main(int argc, char **argv)
 	{	
 		if(((str[i] == '[' && i == 0) || (str[i] == '[' && str[i-1] != '\\')) && i+1 < l)
 		{	
-			empty_stack(mystack);
+			empty_stack(mystack,outfile);
 			if(str[i+1]=='{' && i+1 < l)
 			{	
 				int j = i+2;
@@ -201,7 +202,7 @@ int main(int argc, char **argv)
 				stack<int> temp = mystack;
 				while(!temp.empty())
 				{	
-					cout << opening_tags[temp.top()];
+					outfile << opening_tags[temp.top()];
 					temp.pop();
 				}
 				i = j+2;
@@ -219,12 +220,12 @@ int main(int argc, char **argv)
 				}
 				if(blank_super)
 				{	
-					cout << tag;
+					outfile << tag;
 				}
 				else
 				{	
 					int ind = atoi(tag.c_str());
-					cout << opening_tags[ind];
+					outfile << opening_tags[ind];
 				}
 				i = j+1;
 			}
@@ -234,10 +235,15 @@ int main(int argc, char **argv)
 			if(str[i] == '\\')
 				i++;
 			else
-				cout << str[i++];
+				outfile << str[i++];
 		}
 	}
 
-	cout << endl;
+	outfile << endl;
+	ifstream in("reformated.txt");
+	string s((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
+	fputs(s.c_str(),output);
+	fclose(output);
+
 	return 0;
 }

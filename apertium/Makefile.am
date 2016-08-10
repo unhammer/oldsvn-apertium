@@ -91,10 +91,10 @@ apertium_multiple_translations_LDADD = $(APERTIUM_LIBS) -lapertium$(GENERIC_MAJO
 apertium_destxt_SOURCES = apertium_destxt.cc
 apertium_retxt_SOURCES = apertium_retxt.cc
 apertium_deshtml_SOURCES = apertium_deshtml.cc
-apertium_deshtml_LDADD = $(APERTIUM_LIBS) -lapertium$(GENERIC_MAJOR_VERSION)
+apertium_deshtml_LDADD = $(APERTIUM_LIBS) -lapertium$(GENERIC_MAJOR_VERSION) -ltidy
 
 apertium_rehtml_SOURCES = apertium_rehtml.cc
-apertium_rehtml_LDADD = $(APERTIUM_LIBS) -lapertium$(GENERIC_MAJOR_VERSION)
+apertium_rehtml_LDADD = $(APERTIUM_LIBS) -lapertium$(GENERIC_MAJOR_VERSION) -ltidy
 
 apertium_rehtml_noent_SOURCES = apertium_rehtml_noent.cc
 apertium_desxpresstag_SOURCES = apertium_desxpresstag.cc
