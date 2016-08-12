@@ -18,9 +18,9 @@
 #include <string>
 #include <getopt.h>
 
-
-#include <tidy.h>
-#include <tidybuffio.h>
+// #include <lttoolbox/lt_locale.h>
+// #include "apertium_config.h"
+// #include <apertium/unlocked_cstdio.h>
 
 #ifdef _MSC_VER
 #include <io.h>
@@ -42,41 +42,6 @@ stack <xmlNode*> vec;
 map<string, int> TAGS;
 bool in_inline = false;
 bool in_superblank = false;
-
-
-
-string cleanhtml(const std::string &html)
-{
-    // init a tidy document
-    TidyDoc tidy_doc=tidyCreate();
-    TidyBuffer output_buffer= {0};
- 
-    // configure tidy
-    // the flags tell tidy to output xml and disable warnings
-    bool config_success=tidyOptSetBool(tidy_doc,TidyXmlOut,yes)
-                        && tidyOptSetBool(tidy_doc,TidyQuiet,yes)
-                        && tidyOptSetBool(tidy_doc,TidyNumEntities,yes)
-                        && tidyOptSetBool(tidy_doc,TidyShowWarnings,no);
- 
-    int tidy_rescode=-1;
- 
-    // parse input
-    if(config_success)
-        tidy_rescode=tidyParseString(tidy_doc,html.c_str());
- 
-    // process html
-    if(tidy_rescode>=0)
-        tidy_rescode=tidySaveBuffer(tidy_doc,&output_buffer);
- 
-    if(tidy_rescode<0)
-        throw("tidy has a error: "+tidy_rescode);
- 
-    std::string result=(char *)output_buffer.bp;
-    tidyBufFree(&output_buffer);
-    tidyRelease(tidy_doc);
- 
-    return result;
-}
 
 
 void usage(char *progname)
@@ -338,6 +303,8 @@ string merge_blocks(string s)
 	int i = 1;
 	string ans="";
 	ans += s[0];
+	// cout << s << endl << endl;
+	//outputfile << s << endl << endl;
 
 	while(i<l)
 	{	
@@ -455,6 +422,8 @@ int main(int argc, char **argv)
 	xmlDoc *doc = NULL;
 	xmlNode *root_element = NULL;
 
+	// if (argc != 2)
+	// 	return(1);
 	LIBXML_TEST_VERSION
 
   if((argc-optind+1) > 3)
@@ -468,28 +437,20 @@ int main(int argc, char **argv)
   {
     input = stdin;
     output = stdout;
-    
     char mystring [100];
     FILE *fp;
     fp = fopen("input.xml","w+b");
-    while(fgets(mystring,100,input) != NULL)
+    while(fgets(mystring,100,stdin) != NULL)
     {
     	fputs(mystring,fp);
     }
     fclose(fp);
-    
-    ifstream in("input.xml");
-	string s((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
-    s = cleanhtml(s);
-	
-    fp = fopen("final_input.xml","w+b");
-    fputs(s.c_str(),fp);
-    fclose(fp);
+    doc = xmlReadFile("input.xml", NULL, 0);
 
-    doc = xmlReadFile("final_input.xml",NULL,0);
 	if (doc == NULL) {
 		printf("error: could not parse file %s\n", argv[1]);
 	}
+
   }
   else if ((argc-optind+1) == 2)
   {
@@ -499,25 +460,7 @@ int main(int argc, char **argv)
       usage(argv[0]);
     }
     output = stdout;
-
-    char mystring [100];
-    FILE *fp;
-    fp = fopen("input.xml","w+b");
-    while(fgets(mystring,100,input) != NULL)
-    {
-    	fputs(mystring,fp);
-    }
-    fclose(fp);
-    
-    ifstream in("input.xml");
-	string s((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
-    s = cleanhtml(s);
-	
-    fp = fopen("final_input.xml","w+b");
-    fputs(s.c_str(),fp);
-    fclose(fp);
-
-    doc = xmlReadFile("final_input.xml",NULL,0);
+    doc = xmlReadFile(argv[argc-1],NULL,0);
 	if (doc == NULL) {
 		printf("error: could not parse file %s\n", argv[1]);
 	}
@@ -531,28 +474,12 @@ int main(int argc, char **argv)
     {
       usage(argv[0]);
     }
-        char mystring [100];
-    FILE *fp;
-    fp = fopen("input.xml","w+b");
-    while(fgets(mystring,100,input) != NULL)
-    {
-    	fputs(mystring,fp);
-    }
-    fclose(fp);
-    
-    ifstream in("input.xml");
-	string s((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
-    s = cleanhtml(s);
-	
-    fp = fopen("final_input.xml","w+b");
-    fputs(s.c_str(),fp);
-    fclose(fp);
-
-    doc = xmlReadFile("final_input.xml",NULL,0);
+    doc = xmlReadFile(argv[argc-2],NULL,0);
 	if (doc == NULL) {
 		printf("error: could not parse file %s\n", argv[1]);
 	}
   }
+
 
 #ifdef _MSC_VER
     _setmode(_fileno(input), _O_U8TEXT);
@@ -563,6 +490,10 @@ int main(int argc, char **argv)
 	LIBXML_TEST_VERSION
 
 	// doc = xmlReadFile("input.xml", NULL, 0);
+
+	if (doc == NULL) {
+		printf("error: could not parse file %s\n", argv[1]);
+	}
 
 	root_element = xmlDocGetRootElement(doc);
 	// cerr << "Parsing starts\n";
@@ -585,12 +516,18 @@ int main(int argc, char **argv)
 	// cout << merged << endl << endl;
 	
 	string final = add_non_inline_as_ids(merged);
+	// cout << final << endl;
+	// ofstream deformatted_output (stdout);
+	// deformatted_output << final;
 	fputs(final.c_str(),output);
 	fputs("\n",output);
-	fclose(output);
 	//print_maps();
 	string filename = "tags_data.txt";
 	put_in_database(filename);
+
+	// ifstream tags("tags_data.txt");
+	// string st((std::istreambuf_iterator<char>(tags)), std::istreambuf_iterator<char>());
+	// cout << st.length();
 
 	return 0;
 }
