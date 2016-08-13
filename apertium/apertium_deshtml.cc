@@ -409,11 +409,21 @@ string empty_before_inline(string s)
 		}
 		if(in_inline && s[i] == '[' && s[i+1] != '{' && s[i+1] != ']')
 		{	
-			i += 2;
-			while(s[i] != ']')
-				i++;
 			i++;
-			ans += ' ';
+			string temp = "[";
+			bool found = false;
+			while(s[i] != ']' && i < l)
+			{
+				if(!is_blank(s[i]))
+					found = true;
+				temp += s[i++];
+			}
+			i++;
+			if(found)
+				temp += ']';
+			else
+				temp = " ";
+			ans += temp;
 			in_inline = false;
 		}
 		else
