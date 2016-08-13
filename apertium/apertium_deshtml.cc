@@ -392,6 +392,37 @@ string add_non_inline_as_ids(string s)
 	return ans;
 }
 
+string empty_before_inline(string s)
+{
+	int i = 0;
+	int l = s.length();
+	string ans="";
+	bool in_inline = false;
+	while(i+1 < l)
+	{
+		if(s[i] == '[' && s[i+1] == '{')
+		{
+			in_inline = true;
+			i += 2;
+			ans += "[{";
+			continue;
+		}
+		if(in_inline && s[i] == '[' && s[i+1] != '{' && s[i+1] != ']')
+		{	
+			i += 2;
+			while(s[i] != ']')
+				i++;
+			i++;
+			ans += ' ';
+			in_inline = false;
+		}
+		else
+			ans += s[i++];
+	}
+	return ans;
+}
+
+
 void put_in_database(string filename)
 {	
     ofstream attributes (filename.c_str());
@@ -489,14 +520,11 @@ int main(int argc, char **argv)
 
 	LIBXML_TEST_VERSION
 
-	// doc = xmlReadFile("input.xml", NULL, 0);
-
 	if (doc == NULL) {
 		printf("error: could not parse file %s\n", argv[1]);
 	}
 
 	root_element = xmlDocGetRootElement(doc);
-	// cerr << "Parsing starts\n";
 
 	print_element_names(root_element,outfile);
 	outfile<<endl;
@@ -507,27 +535,20 @@ int main(int argc, char **argv)
 
 	ifstream in("temp.txt");
 	string s((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
-		// cout << s << endl;
 
 	string rds = remove_repeatition_superblanks(s);
-	// cout << rds << endl << endl;
 
 	string merged = merge_blocks(rds);
-	// cout << merged << endl << endl;
 	
-	string final = add_non_inline_as_ids(merged);
-	// cout << final << endl;
-	// ofstream deformatted_output (stdout);
-	// deformatted_output << final;
+	string remove_extra = add_non_inline_as_ids(merged);
+
+	string final = empty_before_inline(remove_extra);
+
 	fputs(final.c_str(),output);
 	fputs("\n",output);
-	//print_maps();
 	string filename = "tags_data.txt";
 	put_in_database(filename);
 
-	// ifstream tags("tags_data.txt");
-	// string st((std::istreambuf_iterator<char>(tags)), std::istreambuf_iterator<char>());
-	// cout << st.length();
 
 	return 0;
 }
