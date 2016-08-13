@@ -558,6 +558,8 @@ int main(int argc, char **argv)
 	fputs("\n",output);
 	string filename = "tags_data.txt";
 	put_in_database(filename);
+	remove("temp.txt");
+	remove("input.xml");
 
 
 	return 0;
