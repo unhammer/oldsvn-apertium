@@ -446,7 +446,8 @@ string cleanhtml(const std::string &html)
     bool config_success=tidyOptSetBool(tidy_doc,TidyXmlOut,yes)
                         && tidyOptSetBool(tidy_doc,TidyQuiet,yes)
                         && tidyOptSetBool(tidy_doc,TidyNumEntities,yes)
-                        && tidyOptSetBool(tidy_doc,TidyShowWarnings,no);
+                        && tidyOptSetBool(tidy_doc,TidyShowWarnings,no)
+                        && tidyOptSetBool(tidy_doc,TidyHideComments,yes);
  
     int tidy_rescode=-1;
  
