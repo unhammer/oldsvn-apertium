@@ -285,6 +285,7 @@ int main(int argc, char **argv)
 	fputs(s.c_str(),output);
 	fclose(output);
 	remove("reformated.txt");
+	remove("tags_data.txt");
 
 	return 0;
 }
