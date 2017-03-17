@@ -1361,7 +1361,7 @@ Interchunk::readToken(FILE *in)
     else if(val == L'^')
     {
       inword = true;
-      return input_buffer.add(TransferToken(content, tt_blank));
+      return input_buffer.add(TransferToken(content, tt_eof)); // TODO blanks!
     }
     else
     {
@@ -1479,24 +1479,24 @@ Interchunk::interchunk(FILE *in, FILE *out)
     switch(current.getType())
     {
       case tt_word:
-	applyWord(current.getContent());
-        tmpword.push_back(&current.getContent());
+	applyWord(current.getWord());
+        tmpword.push_back(&current.getWord());
 	break;
 
-      case tt_blank:
-	ms.step(L' ');
-	tmpblank.push_back(&current.getContent());
-	break;
+  //     case tt_superblank:
+	// ms.step(L' ');
+	// tmpblank.push_back(&current.getWord());
+	// break;
 
       case tt_eof:
 	if(tmpword.size() != 0)
 	{
-	  tmpblank.push_back(&current.getContent());
+	  tmpblank.push_back(&current.getWord());
 	  ms.clear();
 	}
 	else
 	{
-	  fputws_unlocked(current.getContent().c_str(), output);
+	  fputws_unlocked(current.getWord().c_str(), output);
 	  tmpblank.clear();
 	  return;
 	}

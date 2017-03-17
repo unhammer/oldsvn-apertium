@@ -16,6 +16,7 @@
  */
 #include <apertium/transfer_token.h>
 #include <apertium/string_utils.h>
+#include <iostream>
 
 using namespace Apertium;
 
@@ -23,7 +24,10 @@ void
 TransferToken::copy(TransferToken const &o)
 {
   type = o.type;
-  content = o.content;
+  word = o.word;
+  superblank = o.superblank;
+  freeblank = o.freeblank;
+  format = o.format;
 }
 
 void
@@ -36,11 +40,41 @@ type(tt_eof)
 {
 }
 
-TransferToken::TransferToken(wstring const &content,
-			     TransferTokenType type)
+TransferToken::TransferToken(wstring const &word, TransferTokenType type)
 {
-  this->content = content;
+  this->word = word;
   this->type = type;
+}
+
+TransferToken::TransferToken(TransferTokenType type,
+                             wstring const &superblank)
+{
+  this->type = type;
+  this->superblank = superblank;
+}
+
+TransferToken::TransferToken(wstring const &word, TransferTokenType type,
+                             wstring const &blank, int superend, int formatstart)
+{
+  this->word = word;
+  this->type = type;
+
+  int end = (int) blank.size();
+  if(formatstart < 0) {
+    formatstart = end;
+  }
+  if(0 <= superend && superend <= formatstart && formatstart <= end) {
+    this->superblank = blank.substr(0, superend);
+    this->freeblank = blank.substr(superend, formatstart-superend);
+    this->format = blank.substr(formatstart);
+  }
+  else {
+    // TODO: should we fail here? means caller has a bug
+    wcerr << L"Warning in TransferToken::(): bad blank indices, making all super"<<endl;
+    this->superblank = blank;
+  }
+
+
 }
 
 TransferToken::~TransferToken()
@@ -65,15 +99,33 @@ TransferToken::operator =(TransferToken const &o)
 }
 
 TransferTokenType
-TransferToken::getType()
+TransferToken::getType() const
 {
   return type;
 }
 
 wstring & 
-TransferToken::getContent()
+TransferToken::getWord()
 {
-  return content;
+  return word;
+}
+
+wstring &
+TransferToken::getSuperblank()
+{
+  return superblank;
+}
+
+wstring &
+TransferToken::getFreeblank()
+{
+  return freeblank;
+}
+
+wstring &
+TransferToken::getFormat()
+{
+  return format;
 }
 
 void 
@@ -83,8 +135,25 @@ TransferToken::setType(TransferTokenType type)
 }
 
 void 
-TransferToken::setContent(wstring const &content)
+TransferToken::setWord(wstring const &word)
 {
-  this->content = content;
+  this->word = word;
 }
 
+void
+TransferToken::setSuperblank(wstring const &superblank)
+{
+  this->superblank = superblank;
+}
+
+void
+TransferToken::setFreeblank(wstring const &freeblank)
+{
+  this->freeblank = freeblank;
+}
+
+void
+TransferToken::setFormat(wstring const &format)
+{
+  this->format = format;
+}

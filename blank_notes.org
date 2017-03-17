@@ -1,0 +1,132 @@
+* On reading input containing blanks
+
+** phrasebound superblanks
+: [<p>]^foo/…$
+On seeing a regular superblank, store it in the =superblank= vector,
+then on entering rule processing, first output =superblank= and empty
+the variable.
+
+** wordbound blanks
+: [{<b>}]^foo/…$
+Wordbound blanks are always immediately before a lexical unit,
+otherwise they are considered garbage and ignored. On seeing a
+wordbound blank, store it in a vector of same length as the current
+vector of unprocessed words, s.t. we're always able to say what the
+wordbound blank of the current word is.
+
+** unbound blanks (non-super, unanalysed blanks)
+: 100 ^dollars<n>$
+Preceding non-superblanks could be treated as prefixes of the
+wordbound blanks, but that might lead to them being duplicated, which
+might be bad since they can contain symbols that were not put in
+superblanks and also not given analyses. For example, we don't want
+: ^cost<vblex><sg3>$ 100 ^dollars<n>$
+to become
+: ^dollars<n>$ 100 ^cost<vblex>$ 100 ^prpers<prn><sg3>$
+
+The lazy solution is to always output these before rules, like with
+superblanks. But it'd mean people have to actually analyse these
+things if they matter to translation (which they probably should), and
+we'd have to strip whitespace from them (and let =<b>= always just
+output a plain blank).
+
+On the other hand, it'd be nice to actually output them once and only
+once, in the same order as the input. We could store them in a deque,
+and pop one and output it whenever there's a =<b>= in the rule. If we
+run out, we just output plain spaces. Then, after processing a rule,
+we just have to pop and output any remaining ones. This seems like the
+most elegant solution.
+
+
+* Guessing where to put the wordbound blanks
+
+Since lu-handling actually builds up a "myword" string before
+outputting it, and only afterwards outputs the
+: ="^"+myword+"$"
+we should be able to check for any <clip pos="N"/> in there, and
+output the corresponding wordbound blank _before_ the ^.
+
+So if, on processing "myword" in [[file:apertium/transfer.cc::int%20pos%20%3D%20atoi((const%20char%20*)%20element->properties->children->content)%20-%201%3B][processOut,]] the evalString finds
+either one of these:
+: <clip part="whole" pos="N"/>
+: <clip part="lem" pos="N"/>
+: <clip part="lemh" pos="N"/>
+: <clip part="lemq" pos="N"/>
+: <clip part="tags" pos="N"/>
+then the wordbound blank belonging to pos="N" is output _before_ the ^
+in processOut. Any "blankfrom" attribute of =<lu>= overrides the
+clips. If none of these is present, but some clip pos="N" is there,
+that's the fallback. If there is no clip at all, the rule writer
+actually needs to put an attribute on the lu:
+: <lu blankfrom="N">
+
+We shouldn't need to support putting wordbound blanks in variables.
+
+* =<b>= element
+- [[file:apertium/transfer.cc::else%20if(!xmlStrcmp(element->name,%20(const%20xmlChar%20*)%20"b"))][see b handling in evalString]]
+
+The "pos" is now ignored in a =<b>=; any =<b>=-usage can pop the
+unbound blank deque (or, if empty, outputs a plain blank).
+
+* TODO ensure empty <b/>'s turn into empty freeblanks?
+
+* finding where to end the wordblank
+  The reformatter sees plain text interspersed with superblanks, but
+  no ^$. So what if the input is "[{<b>}]cake!", should the ! be part
+  of the <b> or not? Similarly, if the input is "[{<b>}]go through" –
+  how should the reformatter know that <b> was actually meant for the
+  whole multiword?
+
+  We could change the format to be "[{<b>]cake[}]" instead, but that
+  would make parsing the stream a lot more difficult (now we have to
+  support stuff like matching the "}" after a lexical unit, e.g.
+  "[{<b>}]^cake<n>$[}]").
+
+  The simplest way would be to have an lttoolbox mode that delimits
+  output. The -l/-m modes support this (we just have to skip anything
+  from / to $), so that should work, but does mean the reformatter
+  need even more logic as to how to parse the stream (though shouldn't
+  be too bad). (There is also the -t mode, but in that case we have to
+  fix it so it actually outputs unknowns (and provide an alternative
+  mode that removes the unknown word mark).)
+
+
+* deshtml
+  : <p>foo <b>bar fie <i>baz</i> fum</b> fiz</p>
+  :                        ↓ DESHTML ↓
+  : [<p>]foo [{<b>}]bar fie [{<b><i>}]baz [{<b>}]fum fiz[</p>]
+
+  and vice versa
+  : [<p>]^foo$ [{<b>}]^bar fie$ [{<b><i>}]^baz$ [{<b>}]^fum$ ^fiz$[</p>]
+  :                        ↓ REHTML ↓
+  : <p>foo <b>bar fie</b> <b><i>baz</i></b> <b>fum</b> fiz</p>
+
+* Consequences of this type of blank handling
+  Superblanks and freeblanks are now guaranteed to be output
+  regardless of how the transfer rules are written (if they're not,
+  it's a real bug in the C++ code, not in the transfer rule). That is,
+  a badly written transfer rule can not remove superblanks/freeblanks.
+
+  Word formatting blanks are not guaranteed to be output, since we
+  only output them if we're outputting an =<lu>= where there's a clip
+  referring to the position of that wordblank. So if a rule says
+  =<out>…<lu>…<clip pos…"1" part…"lemh"/>= then we use output that
+  wordblank in front of the =<lu>=. But if the clips are just used in
+  =<concat>= with no =<lu>=, or the output is only =<lit>= or
+  =<lit-tag>=, we can't know where to output the wordblank. In those
+  cases, the transfer rule writer has to actually use an attribute
+  hint =<lu blankfrom…"1">=. But this is less work than having to
+  _always_ remember the =<b pos/>= and _only_ regards wordbound
+  blanks, and we've _fixed_ the problem with chunks inadvertently
+  reordering (phrasebound) superblanks.
+
+* Progress
+  apertium-transfer more or less done, apart from mlu's
+
+  haven't started on interchunk (easy? doesn't need to worry about
+  formatblanks) or postchunk (this needs the same treatment as
+  transfer, possibly more).
+
+  pretransfer needs a minor fix
+
+  haven't started at all on deshtml/rehtml -- these are bigger

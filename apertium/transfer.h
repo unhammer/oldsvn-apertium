@@ -34,6 +34,7 @@
 #include <map>
 #include <set>
 #include <vector>
+#include <tuple>
 
 using namespace std;
 
@@ -54,11 +55,14 @@ private:
   xmlDoc *doc;
   xmlNode *root_element;
   TransferWord **word;
-  string **blank;
-  int lword, lblank;
+  string **format;              /* TODO: make part of TransferWord? */
+  std::deque<wstring> freeblank;
+  int lword;
   Buffer<TransferToken> input_buffer;
-  vector<wstring *> tmpword;
-  vector<wstring *> tmpblank;
+  std::vector<TransferToken *> tmpword;
+  /* std::vector<wstring> tmpwordblank; */
+  /* std::deque<wstring> tmpfreeblank; */
+  /* std::vector<wstring> tmpsuperblank; */
 
   FSTProcessor fstp;
   FSTProcessor extended;
@@ -67,7 +71,6 @@ private:
   int any_char;
   int any_tag;
 
-  xmlNode *lastrule;
   unsigned int nwords;
 
   map<xmlNode *, TransferInstr> evalStringCache;
@@ -111,21 +114,30 @@ private:
   bool processNot(xmlNode *localroot);
   bool processIn(xmlNode *localroot);
   int processRule(xmlNode *localroot);
+  typedef std::pair<int, string> best_blank_pos;
+  /**
+   * Try to improve the current best guess for the position that
+   * becomes the wordbound blank of this node.
+   */
+  best_blank_pos wordBlankPos(xmlNode *localroot, best_blank_pos best_so_far);
   string evalString(xmlNode *localroot);
   int processInstruction(xmlNode *localroot);
   int processChoose(xmlNode *localroot);
   string processChunk(xmlNode *localroot);
   string processTags(xmlNode *localroot);
 
+  wstring firstTranslationOfWord(wstring const &word) const;
+
   bool beginsWith(string const &str1, string const &str2) const;
   bool endsWith(string const &str1, string const &str2) const;
   string tolower(string const &str) const;
   string tags(string const &str) const;
-  wstring readWord(FILE *in);
   wstring readBlank(FILE *in);
   wstring readUntil(FILE *in, int const symbol) const;
   void applyWord(wstring const &word_str);
-  int applyRule();
+  int applyRule(xmlNode *rule);
+  void applyDefaultRule(TransferToken &token);
+
   TransferToken & readToken(FILE *in);
   bool checkIndex(xmlNode *element, int index, int limit);
   void transfer_wrapper_null_flush(FILE *in, FILE *out);
