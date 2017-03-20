@@ -12,9 +12,7 @@
  * General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
- * 02111-1307, USA.
+ * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 #include <cstdio>
 #include <cstdlib>
@@ -71,11 +69,15 @@ void readAndWriteUntil(FILE *input, FILE *output, int const charcode, wstring &s
       mychar = fgetwc(input);
       fputwc(mychar, output);
       if(flag == 1)
+      {
         superblanks += mychar;
+      }
     }
   }
   if(flag == 1)
+  {
     superblanks += L']';
+  }
 }
 
 void procWord(FILE *input, FILE *output, bool surface_forms, wstring &superblanks)
@@ -240,7 +242,9 @@ int main(int argc, char *argv[])
     int c=getopt(argc, argv, "enzh");
 #endif
     if (c==-1)
+    {
       break;
+    }
       
     switch (c)
     {
