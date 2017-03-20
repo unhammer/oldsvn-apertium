@@ -89,6 +89,8 @@ class JoinGroupPretransferTest(PretransferTest):
 class InlineBlankPretransferTest(PretransferTest):
     inputs =          ["[{<i>}]^a<vblex><pres>+c<po># b$",          "[{<i>}]^a<vblex><pres>+c<po>+d<po># b$"]
     expectedOutputs = ["[{<i>}]^a# b<vblex><pres>$ [{<i>}]^c<po>$", "[{<i>}]^a# b<vblex><pres>$ [{<i>}]^c<po>$ [{<i>}]^d<po>$"]
-    @unittest.expectedFailure
-    def runTest(self):
-        super().runTest(self)
+
+# #lexical unit does not get the inline blank belonging to the previous one:
+class LexicalUnitInlineBlankPretransferTest(PretransferTest):
+    inputs =          ["[{<i>}]^a<vblex><pres>+c<po># b$ ^a<vblex><pres>+c<po># b$"]
+    expectedOutputs = ["[{<i>}]^a# b<vblex><pres>$ [{<i>}]^c<po>$ ^a# b<vblex><pres>$ ^c<po>$"]
