@@ -62,7 +62,9 @@ void readAndWriteUntil(FILE *input, FILE *output, int const charcode, wstring &s
     }
     fputwc_unlocked(mychar, output);
     if(flag == 1)
+    {
       superblanks += mychar;
+    }
 
     if(mychar == L'\\')
     {
@@ -202,6 +204,10 @@ void processStream(FILE *input, FILE *output, bool null_flush, bool surface_form
 void usage(char *progname)
 {
   wcerr << L"USAGE: " << basename(progname) << L" [input_file [output_file]]" << endl;
+  wcerr << L"  -n         assume no surface forms" << endl;
+  wcerr << L"  -e         treat ~ as compound separator" << endl;
+  wcerr << L"  -z         null-flushing output on '\0'" << endl;
+  wcerr << L"  -h         shows this message" << endl;
   exit(EXIT_FAILURE);
 }
 
