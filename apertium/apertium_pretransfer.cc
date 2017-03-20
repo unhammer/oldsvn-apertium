@@ -36,11 +36,11 @@ using namespace std;
 
 bool compound_sep = false;
 
-void readAndWriteUntil(FILE *input, FILE *output, int const charcode, wstring &superblanks)
+void readAndWriteUntil(FILE *input, FILE *output, int const charcode, wstring &wordblanks)
 {
   int mychar;
   int flag = 0;
-  superblanks = L"";
+  wordblanks = L"";
   while((mychar = fgetwc_unlocked(input)) != charcode)
   { 
     if(flag == 0)
@@ -48,7 +48,7 @@ void readAndWriteUntil(FILE *input, FILE *output, int const charcode, wstring &s
       if(mychar == L'{')
       {
         flag = 1;
-        superblanks.append(L"[");
+        wordblanks.append(L"[");
       }
       else
         flag = 2;
@@ -61,7 +61,7 @@ void readAndWriteUntil(FILE *input, FILE *output, int const charcode, wstring &s
     fputwc_unlocked(mychar, output);
     if(flag == 1)
     {
-      superblanks += mychar;
+      wordblanks += mychar;
     }
 
     if(mychar == L'\\')
@@ -70,17 +70,17 @@ void readAndWriteUntil(FILE *input, FILE *output, int const charcode, wstring &s
       fputwc(mychar, output);
       if(flag == 1)
       {
-        superblanks += mychar;
+        wordblanks += mychar;
       }
     }
   }
   if(flag == 1)
   {
-    superblanks += L']';
+    wordblanks += L']';
   }
 }
 
-void procWord(FILE *input, FILE *output, bool surface_forms, wstring &superblanks)
+void procWord(FILE *input, FILE *output, bool surface_forms, wstring &wordblanks)
 {
   int mychar;
   wstring buffer = L"";
@@ -134,18 +134,18 @@ void procWord(FILE *input, FILE *output, bool surface_forms, wstring &superblank
       }
       else if(in_tag == false && mychar == L'+')
       {
-        buffer.append(L"$ " +superblanks+ L"^");
+        buffer.append(L"$ " +wordblanks+ L"^");
       }
       else if(in_tag == false && mychar == L'~' and compound_sep == true)
       {
-        buffer.append(L"$"+superblanks+L"^");
+        buffer.append(L"$"+wordblanks+L"^");
       }
     }
     else
     {
       if(mychar == L'+' && queuing == true)  
       {
-        buffer.append(L"$ "+superblanks+L"^");
+        buffer.append(L"$ "+wordblanks+L"^");
         buffer_mode = true;
       }
       else 
@@ -160,7 +160,7 @@ void procWord(FILE *input, FILE *output, bool surface_forms, wstring &superblank
 
 void processStream(FILE *input, FILE *output, bool null_flush, bool surface_forms)
 { 
-  wstring superblanks=L"";
+  wstring wordblanks=L"";
   while(true)
   {
     int mychar = fgetwc_unlocked(input);
@@ -172,7 +172,7 @@ void processStream(FILE *input, FILE *output, bool null_flush, bool surface_form
     {
       case L'[':
         fputwc_unlocked(L'[', output);
-        readAndWriteUntil(input, output, L']',superblanks);
+        readAndWriteUntil(input, output, L']',wordblanks);
         fputwc_unlocked(L']', output);
         break;
  
@@ -183,8 +183,9 @@ void processStream(FILE *input, FILE *output, bool null_flush, bool surface_form
  
       case L'^':
         fputwc_unlocked(mychar, output);
-        procWord(input, output, surface_forms,superblanks);
+        procWord(input, output, surface_forms,wordblanks);
         fputwc_unlocked(L'$', output);
+        wordblanks = L"";
         break;
       
       case L'\0':
