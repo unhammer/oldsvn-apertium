@@ -12,14 +12,16 @@
  * General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, see <http://www.gnu.org/licenses/>.
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+ * 02111-1307, USA.
  */
 #include <cstdio>
 #include <cstdlib>
 #include <iostream>
 #include <libgen.h>
 #include <string>
-#include "getopt_long.h"
+#include <getopt.h>
 
 #include <lttoolbox/lt_locale.h>
 #include "apertium_config.h"
@@ -36,27 +38,45 @@ using namespace std;
 
 bool compound_sep = false;
 
-void readAndWriteUntil(FILE *input, FILE *output, int const charcode)
+void readAndWriteUntil(FILE *input, FILE *output, int const charcode, wstring &superblanks)
 {
   int mychar;
-
+  int flag = 0;
+  superblanks = L"";
   while((mychar = fgetwc_unlocked(input)) != charcode)
-  {
+  { 
+    if(flag == 0)
+    {
+      if(mychar == L'{')
+      {
+        flag = 1;
+        superblanks.append(L"[");
+      }
+      else
+        flag = 2;
+    }
     if(feof(input))
     {
       wcerr << L"ERROR: Unexpected EOF" << endl;
       exit(EXIT_FAILURE);
     }
     fputwc_unlocked(mychar, output);
+    if(flag == 1)
+      superblanks += mychar;
+
     if(mychar == L'\\')
     {
       mychar = fgetwc(input);
       fputwc(mychar, output);
+      if(flag == 1)
+        superblanks += mychar;
     }
   }
+  if(flag == 1)
+    superblanks += L']';
 }
 
-void procWord(FILE *input, FILE *output, bool surface_forms)
+void procWord(FILE *input, FILE *output, bool surface_forms, wstring &superblanks)
 {
   int mychar;
   wstring buffer = L"";
@@ -110,18 +130,18 @@ void procWord(FILE *input, FILE *output, bool surface_forms)
       }
       else if(in_tag == false && mychar == L'+')
       {
-        buffer.append(L"$ ^");
+        buffer.append(L"$ " +superblanks+ L"^");
       }
       else if(in_tag == false && mychar == L'~' and compound_sep == true)
       {
-        buffer.append(L"$^");
+        buffer.append(L"$"+superblanks+L"^");
       }
     }
     else
     {
       if(mychar == L'+' && queuing == true)  
       {
-        buffer.append(L"$ ^");
+        buffer.append(L"$ "+superblanks+L"^");
         buffer_mode = true;
       }
       else 
@@ -135,7 +155,8 @@ void procWord(FILE *input, FILE *output, bool surface_forms)
 }
 
 void processStream(FILE *input, FILE *output, bool null_flush, bool surface_forms)
-{
+{ 
+  wstring superblanks=L"";
   while(true)
   {
     int mychar = fgetwc_unlocked(input);
@@ -147,7 +168,7 @@ void processStream(FILE *input, FILE *output, bool null_flush, bool surface_form
     {
       case L'[':
         fputwc_unlocked(L'[', output);
-        readAndWriteUntil(input, output, L']');
+        readAndWriteUntil(input, output, L']',superblanks);
         fputwc_unlocked(L']', output);
         break;
  
@@ -158,7 +179,7 @@ void processStream(FILE *input, FILE *output, bool null_flush, bool surface_form
  
       case L'^':
         fputwc_unlocked(mychar, output);
-        procWord(input, output, surface_forms);
+        procWord(input, output, surface_forms,superblanks);
         fputwc_unlocked(L'$', output);
         break;
       
@@ -181,10 +202,6 @@ void processStream(FILE *input, FILE *output, bool null_flush, bool surface_form
 void usage(char *progname)
 {
   wcerr << L"USAGE: " << basename(progname) << L" [input_file [output_file]]" << endl;
-  wcerr << L"  -n         assume no surface forms" << endl;
-  wcerr << L"  -e         treat ~ as compound separator" << endl;
-  wcerr << L"  -z         null-flushing output on '\0'" << endl;
-  wcerr << L"  -h         shows this message" << endl;
   exit(EXIT_FAILURE);
 }
 
@@ -197,9 +214,12 @@ int main(int argc, char *argv[])
   bool null_flush = false;
   bool surface_forms = false;
   
+#if HAVE_GETOPT_LONG
   int option_index=0;
+#endif
 
   while (true) {
+#if HAVE_GETOPT_LONG
     static struct option long_options[] =
     {
       {"null-flush", no_argument, 0, 'z'},
@@ -210,6 +230,9 @@ int main(int argc, char *argv[])
     };
 
     int c=getopt_long(argc, argv, "enzh", long_options, &option_index);
+#else
+    int c=getopt(argc, argv, "enzh");
+#endif
     if (c==-1)
       break;
       
