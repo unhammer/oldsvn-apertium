@@ -402,8 +402,8 @@ Transfer::evalString(xmlNode *element)
           wcerr <<L"blank=?"<<blank<<endl;
           if(blank.empty())     // TODO: or?
           {
-          return " ";
-        }
+            return " ";
+          }
           else {
             wcerr <<L"blank="<<blank<<endl;
             return UtfConverter::toUtf8(blank).c_str();
@@ -1254,10 +1254,10 @@ Transfer::processCallMacro(xmlNode *localroot)
   {
     delete[] myword;
   }
-  if(format)
+  if(myblank)
   {
     // TODO: leads to double free, why?
-    // delete[] format;
+    delete[] myblank;
   }
 }
 
