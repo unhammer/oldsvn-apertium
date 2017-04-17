@@ -51,5 +51,15 @@ stuff) to create new pretransfer tests."""
             pass
 
 class InlineBlankTransferTest(TransferTest):
-    inputs =            ["[{<em>}]^beautiful<adj>/bello<adj>/bonito<adj>/lindo<adj>/hermoso<adj>$ [{<i><b>}]^mind<n><sg>/mente<n><f><sg>$^.<sent>/.<sent>$"]
-    expectedOutputs =   ["^Nom_adj<SN><UNDET><f><sg>{[{<i><b>}]^mente<n><3><4>$ [{<em>}]^bello<adj><3><4>$}$^punt<sent>{^.<sent>$}$"]
+    inputs =            ["[{<em>}]^beautiful<adj>/bello<adj>/bonito<adj>/lindo<adj>/hermoso<adj>$ [{<i><b>}]^mind<n><sg>/mente<n><f><sg>$^.<sent>/.<sent>$",
+                         "^beautiful<adj>/bello<adj>/bonito<adj>/lindo<adj>/hermoso<adj>$ [{<i><b>}]^mind<n><sg>/mente<n><f><sg>$^.<sent>/.<sent>$",
+                         "[{<b>}]^beautiful<adj>/bello<adj>/bonito<adj>/lindo<adj>/hermoso<adj>$ ^mind<n><sg>/mente<n><f><sg>$^.<sent>/.<sent>$",
+                         "[{<i>}]^all<predet><sp>/todo<predet><GD><ND>$ [{<b>}]^student<n><pl>/estudiante<n><mf><pl>$",
+                         "^all<predet><sp>/todo<predet><GD><ND>$ ^student<n><pl>/estudiante<n><mf><pl>$",
+                         ]
+    expectedOutputs =   ["^Nom_adj<SN><UNDET><f><sg>{[{<i><b>}]^mente<n><3><4>$ [{<em>}]^bello<adj><3><4>$}$^punt<sent>{^.<sent>$}$",
+                         "^Nom_adj<SN><UNDET><f><sg>{[{<i><b>}]^mente<n><3><4>$ ^bello<adj><3><4>$}$^punt<sent>{^.<sent>$}$",
+                         "^Nom_adj<SN><UNDET><f><sg>{^mente<n><3><4>$ [{<b>}]^bello<adj><3><4>$}$^punt<sent>{^.<sent>$}$",
+                         "^Det_det_nom<SN><DET><GD><pl>{[{<i>}]^todo<predet><3><4>$ [{<i>}]^el<det><def><3><pl>$  [{<b>}]^estudiante<n><mf><4>$}$",
+                         "^det_det_nom<SN><DET><GD><pl>{^todo<predet><3><4>$ ^el<det><def><3><pl>$  ^estudiante<n><mf><4>$}$",
+                         ]
