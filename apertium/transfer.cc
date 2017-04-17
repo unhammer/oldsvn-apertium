@@ -1256,7 +1256,6 @@ Transfer::processCallMacro(xmlNode *localroot)
   }
   if(myblank)
   {
-    // TODO: leads to double free, why?
     delete[] myblank;
   }
 }
