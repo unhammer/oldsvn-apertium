@@ -96,6 +96,9 @@ Transfer::readData(FILE *in)
   {
     int key = Compression::multibyte_read(in);
     finals[key] = Compression::multibyte_read(in);
+    std::cerr << "\033[1;35mkey=\t" << key << "\033[0m" << std::endl;
+    std::cerr << "\033[1;35mfinals[key]=\t" << finals[key] << "\033[0m" << std::endl;
+
   }
 
   me = new MatchExe(t, finals);
@@ -2127,6 +2130,8 @@ Transfer::transfer(FILE *in, FILE *out)
       }
     }
     int val = ms.classifyFinals(me->getFinals(), banned_rules);
+    std::cerr << "\033[1;35mval=\t" << val << "\033[0m" << std::endl;
+
     if(val != -1)
     {
       lastrule = rule_map[val-1];

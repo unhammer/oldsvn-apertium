@@ -211,16 +211,20 @@ TRXReader::procRules()
         for(set<int>::iterator it = alive_states.begin(), limit = alive_states.end();
             it != limit; it++)
         {
-          td.getTransducer().setFinal(*it);
-          if(td.getFinals().find(*it) == td.getFinals().end())
+          int fin = td.getTransducer().insertSingleTransduction(td.getAlphabet()(0, count), *it);
+          std::cerr << "\033[1;35mcount=\t" << count << "\033[0m" << std::endl;
+          std::cerr << "\033[1;35mtd.getAlphabet()(0, count)=\t" << td.getAlphabet()(0, count) << "\033[0m" << std::endl;
+
+          td.getTransducer().setFinal(fin);
+          if(td.getFinals().find(fin) == td.getFinals().end())
           {
-            td.getFinals()[*it] = count;
+            td.getFinals()[fin] = count;
           }       
           else
           {
             wcerr << L"Warning (" << xmlTextReaderGetParserLineNumber(reader);
             wcerr << L"): "
-              << L"Paths to rule " << count << " blocked by rule " << td.getFinals()[*it]
+              << L"Paths to rule " << count << " blocked by rule " << td.getFinals()[fin]
               << L"." << endl;
 
           }

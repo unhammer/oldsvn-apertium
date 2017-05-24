@@ -122,6 +122,42 @@ void
 TransferData::write(FILE *output)
 {
   alphabet.write(output);
+
+  transducer.minimize();
+
+  map<int, int> finals;
+  map<int, multimap<int, int> >& transitions = transducer.getTransitions();
+  for(map<int, multimap<int, int> >::const_iterator it = transitions.begin(),
+        limit = transitions.end(); it != limit; ++it)
+  {
+    const int& src = it->first;
+    std::cerr << "\033[1;35msrc=\t" << src << "\033[0m" << std::endl;
+    for(multimap<int, int>::const_iterator arc = it->second.begin(),
+          arclimit = it->second.end(); arc != arclimit; ++arc)
+    {
+      int label = arc->first;
+      int trg = arc->second;
+      if(label < 0) {
+        continue;
+      }
+      if(alphabet.decode(label).first != 0) {
+        continue;
+      }
+      int rlabel = alphabet.decode(label).second;
+      if(rlabel == 0) {
+        continue;
+      }
+      transducer.setFinal(src);
+      finals[src] = rlabel;
+
+      std::cerr << "\033[1;35mlabel= " << label << " ;decode(label)=(" << alphabet.decode(label).first << "," << alphabet.decode(label).second << ")\033[0m\t";
+
+      std::cerr << "\033[1;35mtrg=\t" << trg << "\033[0m\t";
+      std::cerr << "\033[1;35misFinal(src)=\t" << transducer.isFinal(src) << "\033[0m" << std::endl;
+      std::cerr << "\033[1;35misFinal(trg)=\t" << transducer.isFinal(trg) << "\033[0m" << std::endl;
+    }
+  }
+
   transducer.write(output, alphabet.size());
 
   // finals
