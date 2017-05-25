@@ -52,6 +52,7 @@ private:
   Transducer & getTransducer();
   map<int, int> & getFinals();
   map<wstring, wstring, Ltstr> & getAttrItems();  
+  set<int> final_labels;
 
   map<wstring, int, Ltstr> & getMacros();
   map<wstring, set<wstring, Ltstr>, Ltstr> & getLists();

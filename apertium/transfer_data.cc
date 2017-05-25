@@ -124,20 +124,21 @@ TransferData::write(FILE *output)
   alphabet.write(output);
 
   transducer.minimize();
-
+  // Make a copy of the old finals:
+  set<int> tr_finals = transducer.getFinals();
+  // Final the new finals, and collect a map of them into their rule numbers:
   map<int, int> finals;
   map<int, multimap<int, int> >& transitions = transducer.getTransitions();
   for(map<int, multimap<int, int> >::const_iterator it = transitions.begin(),
         limit = transitions.end(); it != limit; ++it)
   {
     const int& src = it->first;
-    std::cerr << "\033[1;35msrc=\t" << src << "\033[0m" << std::endl;
     for(multimap<int, int>::const_iterator arc = it->second.begin(),
           arclimit = it->second.end(); arc != arclimit; ++arc)
     {
       int label = arc->first;
       int trg = arc->second;
-      if(label < 0) {
+      if(alphabet.isTag(label)) {
         continue;
       }
       if(alphabet.decode(label).first != 0) {
@@ -147,15 +148,27 @@ TransferData::write(FILE *output)
       if(rlabel == 0) {
         continue;
       }
+      if(!transducer.isFinal(trg)) {
+        std::cerr << "Warning: src=" << src << " label=" << label << " decode(label)=(" << alphabet.decode(label).first << "," << alphabet.decode(label).second << ") non-final trg=" << trg;
+        continue;
+      }
+      if(final_labels.count(label) == 0) {
+        std::cerr << "Warning: src=" << src << " label=" << label << " decode(label)=(" << alphabet.decode(label).first << "," << alphabet.decode(label).second << ") trg=" <<trg << " not in final_labels";
+        continue;
+      }
       transducer.setFinal(src);
       finals[src] = rlabel;
 
-      std::cerr << "\033[1;35mlabel= " << label << " ;decode(label)=(" << alphabet.decode(label).first << "," << alphabet.decode(label).second << ")\033[0m\t";
+      std::cerr << "\033[1;35msrc= " << src << "\tlabel= " << label << " ;decode(label)=(" << alphabet.decode(label).first << "," << alphabet.decode(label).second << ")\033[0m\t";
 
       std::cerr << "\033[1;35mtrg=\t" << trg << "\033[0m\t";
-      std::cerr << "\033[1;35misFinal(src)=\t" << transducer.isFinal(src) << "\033[0m" << std::endl;
-      std::cerr << "\033[1;35misFinal(trg)=\t" << transducer.isFinal(trg) << "\033[0m" << std::endl;
+      std::cerr << "\033[1;35misFinal(src)=" << transducer.isFinal(src) << " (trg)=" << transducer.isFinal(trg) << "\033[0m" << std::endl;
     }
+  }
+  for(set<int>::const_iterator it = tr_finals.begin(), limit = tr_finals.end(); it != limit; ++it)
+  {
+    transducer.setFinal(*it, false);
+    std::cerr << "\033[1;35munfinalling *it=" << (*it) << "\tisFinal=" << transducer.isFinal(*it) << std::endl;
   }
 
   transducer.write(output, alphabet.size());
@@ -166,6 +179,7 @@ TransferData::write(FILE *output)
   for(map<int, int>::const_iterator it = finals.begin(), limit = finals.end();
       it != limit; it++)
   {
+    std::cerr << "\033[1;35mwriting finals[" << it->first << "]=" << it->second << "\033[0m" << std::endl;
     Compression::multibyte_write(it->first, output);
     Compression::multibyte_write(it->second, output);
   }

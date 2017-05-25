@@ -211,9 +211,10 @@ TRXReader::procRules()
         for(set<int>::iterator it = alive_states.begin(), limit = alive_states.end();
             it != limit; it++)
         {
-          int fin = td.getTransducer().insertSingleTransduction(td.getAlphabet()(0, count), *it);
-          std::cerr << "\033[1;35mcount=\t" << count << "\033[0m" << std::endl;
-          std::cerr << "\033[1;35mtd.getAlphabet()(0, count)=\t" << td.getAlphabet()(0, count) << "\033[0m" << std::endl;
+          int fin_label = td.getAlphabet()(0, count);
+          td.final_labels.insert(fin_label);
+          int fin = td.getTransducer().insertSingleTransduction(fin_label, *it);
+          // std::cerr << "\033[1;35mcount=\t" << count << "fin_label=\t"<<fin_label<<"\033[0m\t" << std::endl;
 
           td.getTransducer().setFinal(fin);
           if(td.getFinals().find(fin) == td.getFinals().end())

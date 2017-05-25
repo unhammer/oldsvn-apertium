@@ -2130,7 +2130,7 @@ Transfer::transfer(FILE *in, FILE *out)
       }
     }
     int val = ms.classifyFinals(me->getFinals(), banned_rules);
-    std::cerr << "\033[1;35mval=\t" << val << "\033[0m" << std::endl;
+    // std::cerr << "\033[1;35mval=\t" << val << "\033[0m" << std::endl;
 
     if(val != -1)
     {
