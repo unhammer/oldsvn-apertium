@@ -159,16 +159,15 @@ TransferData::write(FILE *output)
       transducer.setFinal(src);
       finals[src] = rlabel;
 
-      std::cerr << "\033[1;35msrc= " << src << "\tlabel= " << label << " ;decode(label)=(" << alphabet.decode(label).first << "," << alphabet.decode(label).second << ")\033[0m\t";
-
-      std::cerr << "\033[1;35mtrg=\t" << trg << "\033[0m\t";
-      std::cerr << "\033[1;35misFinal(src)=" << transducer.isFinal(src) << " (trg)=" << transducer.isFinal(trg) << "\033[0m" << std::endl;
+      // std::cerr << "\033[1;35msrc= " << src << "\tlabel= " << label << " ;decode(label)=(" << alphabet.decode(label).first << "," << alphabet.decode(label).second << ")\033[0m\t";
+      // std::cerr << "\033[1;35mtrg=\t" << trg << "\033[0m\t";
+      // std::cerr << "\033[1;35misFinal(src)=" << transducer.isFinal(src) << " (trg)=" << transducer.isFinal(trg) << "\033[0m" << std::endl;
     }
   }
   for(set<int>::const_iterator it = tr_finals.begin(), limit = tr_finals.end(); it != limit; ++it)
   {
     transducer.setFinal(*it, false);
-    std::cerr << "\033[1;35munfinalling *it=" << (*it) << "\tisFinal=" << transducer.isFinal(*it) << std::endl;
+    // std::cerr << "\033[1;35munfinalling *it=" << (*it) << "\tisFinal=" << transducer.isFinal(*it) << std::endl;
   }
 
   transducer.write(output, alphabet.size());
@@ -179,7 +178,7 @@ TransferData::write(FILE *output)
   for(map<int, int>::const_iterator it = finals.begin(), limit = finals.end();
       it != limit; it++)
   {
-    std::cerr << "\033[1;35mwriting finals[" << it->first << "]=" << it->second << "\033[0m" << std::endl;
+    // std::cerr << "\033[1;35mwriting finals[" << it->first << "]=" << it->second << "\033[0m" << std::endl;
     Compression::multibyte_write(it->first, output);
     Compression::multibyte_write(it->second, output);
   }

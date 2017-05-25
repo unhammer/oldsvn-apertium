@@ -96,8 +96,8 @@ Transfer::readData(FILE *in)
   {
     int key = Compression::multibyte_read(in);
     finals[key] = Compression::multibyte_read(in);
-    std::cerr << "\033[1;35mkey=\t" << key << "\033[0m" << std::endl;
-    std::cerr << "\033[1;35mfinals[key]=\t" << finals[key] << "\033[0m" << std::endl;
+    // std::cerr << "\033[1;35mkey=\t" << key << "\033[0m" << std::endl;
+    // std::cerr << "\033[1;35mfinals[key]=\t" << finals[key] << "\033[0m" << std::endl;
 
   }
 
