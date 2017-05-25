@@ -213,10 +213,11 @@ TRXReader::procRules()
         {
           if(td.seen_rules.find(*it) == td.seen_rules.end())
           {
+            // Encode the rule count in an arc, later extracted by TransferData::write
+            // This is so we can minimize the transducer before writing.
             int fin_label = td.getAlphabet()(0, count);
             td.final_labels.insert(fin_label);
             int fin = td.getTransducer().insertSingleTransduction(fin_label, *it);
-            // std::cerr << "\033[1;35mcount=\t" << count << "fin_label=\t"<<fin_label<<"\033[0m\t" << std::endl;
             td.getTransducer().setFinal(fin);
             td.seen_rules[*it] = count;
           }
