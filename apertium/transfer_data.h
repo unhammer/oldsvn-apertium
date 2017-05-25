@@ -39,7 +39,6 @@ private:
   
   Alphabet alphabet;
   Transducer transducer;
-  map<int, int> finals;
 
   void writeRegexps(FILE *output);
  public:
@@ -50,9 +49,10 @@ private:
   
   Alphabet & getAlphabet();
   Transducer & getTransducer();
-  map<int, int> & getFinals();
   map<wstring, wstring, Ltstr> & getAttrItems();  
+
   set<int> final_labels;
+  map<int, int> seen_rules;
 
   map<wstring, int, Ltstr> & getMacros();
   map<wstring, set<wstring, Ltstr>, Ltstr> & getLists();

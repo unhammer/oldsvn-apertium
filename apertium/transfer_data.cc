@@ -30,7 +30,8 @@ TransferData::copy(TransferData const &o)
 {
   alphabet = o.alphabet;
   transducer = o.transducer;
-  finals = o.finals;
+  final_labels = o.final_labels;
+  seen_rules = o.seen_rules;
   attr_items = o.attr_items;
   macros = o.macros;
   lists = o.lists;
@@ -88,12 +89,6 @@ TransferData::getTransducer()
   return transducer;
 }
 
-map<int, int> &
-TransferData::getFinals()
-{
-  return finals;
-}
-
 map<wstring, wstring, Ltstr> &
 TransferData::getAttrItems()
 {
@@ -126,8 +121,8 @@ TransferData::write(FILE *output)
   transducer.minimize();
   // Make a copy of the old finals:
   set<int> tr_finals = transducer.getFinals();
-  // Final the new finals, and collect a map of them into their rule numbers:
-  map<int, int> finals;
+  // Create the real finals, and collect a map of them into their rule numbers:
+  map<int, int> final_rules;
   map<int, multimap<int, int> >& transitions = transducer.getTransitions();
   for(map<int, multimap<int, int> >::const_iterator it = transitions.begin(),
         limit = transitions.end(); it != limit; ++it)
@@ -157,7 +152,7 @@ TransferData::write(FILE *output)
         continue;
       }
       transducer.setFinal(src);
-      finals[src] = rlabel;
+      final_rules[src] = rlabel;
 
       // std::cerr << "\033[1;35msrc= " << src << "\tlabel= " << label << " ;decode(label)=(" << alphabet.decode(label).first << "," << alphabet.decode(label).second << ")\033[0m\t";
       // std::cerr << "\033[1;35mtrg=\t" << trg << "\033[0m\t";
@@ -172,13 +167,13 @@ TransferData::write(FILE *output)
 
   transducer.write(output, alphabet.size());
 
-  // finals
+  // final_rules
 
-  Compression::multibyte_write(finals.size(), output);
-  for(map<int, int>::const_iterator it = finals.begin(), limit = finals.end();
+  Compression::multibyte_write(final_rules.size(), output);
+  for(map<int, int>::const_iterator it = final_rules.begin(), limit = final_rules.end();
       it != limit; it++)
   {
-    // std::cerr << "\033[1;35mwriting finals[" << it->first << "]=" << it->second << "\033[0m" << std::endl;
+    // std::cerr << "\033[1;35mwriting final_rules[" << it->first << "]=" << it->second << "\033[0m" << std::endl;
     Compression::multibyte_write(it->first, output);
     Compression::multibyte_write(it->second, output);
   }
