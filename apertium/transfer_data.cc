@@ -133,22 +133,22 @@ TransferData::write(FILE *output)
     {
       int label = arc->first;
       int trg = arc->second;
-      if(alphabet.isTag(label)) {
-        continue;
-      }
-      if(alphabet.decode(label).first != 0) {
-        continue;
-      }
+      // if(alphabet.isTag(label)) {
+      //   continue;
+      // }
+      // if(alphabet.decode(label).first != 0) {
+      //   continue;
+      // }
       int rlabel = alphabet.decode(label).second;
-      if(rlabel == 0) {
+      // if(rlabel == 0) {
+      //   continue;
+      // }
+      if(final_labels.count(label) == 0) {
+        // std::cerr << "Warning: src=" << src << " label=" << label << " decode(label)=(" << alphabet.decode(label).first << "," << alphabet.decode(label).second << ") trg=" <<trg << " not in final_labels" << std::endl;
         continue;
       }
       if(!transducer.isFinal(trg)) {
-        std::cerr << "Warning: src=" << src << " label=" << label << " decode(label)=(" << alphabet.decode(label).first << "," << alphabet.decode(label).second << ") non-final trg=" << trg;
-        continue;
-      }
-      if(final_labels.count(label) == 0) {
-        std::cerr << "Warning: src=" << src << " label=" << label << " decode(label)=(" << alphabet.decode(label).first << "," << alphabet.decode(label).second << ") trg=" <<trg << " not in final_labels";
+        // std::cerr << "Warning: src=" << src << " label=" << label << " decode(label)=(" << alphabet.decode(label).first << "," << alphabet.decode(label).second << ") non-final trg=" << trg << " final_labels.count:"<< final_labels.count(label) << std::endl;
         continue;
       }
       transducer.setFinal(src);
