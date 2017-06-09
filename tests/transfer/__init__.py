@@ -61,5 +61,5 @@ class InlineBlankTransferTest(TransferTest):
                          "^Nom_adj<SN><UNDET><f><sg>{[{<i><b>}]^mente<n><3><4>$ ^bello<adj><3><4>$}$^punt<sent>{^.<sent>$}$",
                          "^Nom_adj<SN><UNDET><f><sg>{^mente<n><3><4>$ [{<b>}]^bello<adj><3><4>$}$^punt<sent>{^.<sent>$}$",
                          "^Det_det_nom<SN><DET><GD><pl>{[{<i>}]^todo<predet><3><4>$ [{<i>}]^el<det><def><3><pl>$  [{<b>}]^estudiante<n><mf><4>$}$",
-                         "^det_det_nom<SN><DET><GD><pl>{^todo<predet><3><4>$ ^el<det><def><3><pl>$  ^estudiante<n><mf><4>$}$",
+                         "^Det_det_nom<SN><DET><GD><pl>{^todo<predet><3><4>$ ^el<det><def><3><pl>$  ^estudiante<n><mf><4>$}$",
                          ]
