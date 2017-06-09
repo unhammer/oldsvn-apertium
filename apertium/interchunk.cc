@@ -32,6 +32,11 @@ using namespace Apertium;
 using namespace std;
 
 void
+Interchunk::copy(Interchunk const &o)
+{
+}
+
+void
 Interchunk::destroy()
 {
   delete me;
@@ -44,15 +49,7 @@ Interchunk::destroy()
   }  
 }
 
-Interchunk::Interchunk() :
-word(0),
-blank(0),
-lword(0),
-lblank(0),
-output(0),
-any_char(0),
-any_tag(0),
-nwords(0)
+Interchunk::Interchunk()
 {
   me = NULL;
   doc = NULL;
@@ -68,6 +65,22 @@ nwords(0)
 Interchunk::~Interchunk()
 {
   destroy();
+}
+
+Interchunk::Interchunk(Interchunk const &o)
+{
+  copy(o);
+}
+
+Interchunk &
+Interchunk::operator =(Interchunk const &o)
+{
+  if(this != &o)
+  {
+    destroy();
+    copy(o);
+  }
+  return *this;
 }
 
 void 
@@ -217,15 +230,6 @@ Interchunk::checkIndex(xmlNode *element, int index, int limit)
     wcerr << L"Error in " << UtfConverter::fromUtf8((char *) doc->URL) << L": line " << element->line << L": index >= limit" << endl;
     return false;
   }
-  if(index < 0) {
-    wcerr << L"Error in " << UtfConverter::fromUtf8((char *) doc->URL) << L": line " << element->line << L": index < 0" << endl;
-    return false;
-  }
-  if(word[index] == 0)
-  {
-    wcerr << L"Error in " << UtfConverter::fromUtf8((char *) doc->URL) << L": line " << element->line << L": Null access at word[index]" << endl;
-    return false;
-  }
   return true;
 }
 
@@ -237,7 +241,7 @@ Interchunk::evalString(xmlNode *element)
   {
     throw "Interchunk::evalString() was passed a NULL element";
   }
-
+  // cout << "eval string: " << endl;
   map<xmlNode *, TransferInstr>::iterator it;
   it = evalStringCache.find(element);
   if(it != evalStringCache.end())
@@ -268,12 +272,14 @@ Interchunk::evalString(xmlNode *element)
         return ti.getContent();
         
       case ti_b:
-        if(ti.getPos() >= 0 && checkIndex(element, ti.getPos(), lblank))
+        if(checkIndex(element, ti.getPos(), lblank))
         {
-          return !blank?"":*(blank[ti.getPos()]);
-        }
-        else {
-          return " ";
+        	if(ti.getPos() >= 0){
+        		if(blank){
+        			return *blank[ti.getPos()];
+        		}
+        	}
+        return " ";
         }
         break;
             
@@ -430,7 +436,31 @@ Interchunk::processChunk(xmlNode *localroot)
   {
     if(i->type == XML_ELEMENT_NODE)
     {
-      result.append(evalString(i));
+    
+    	string s = evalString(i);
+    	result.append(s);
+    	wstring ws = UtfConverter::fromUtf8(s);
+    	wstring word = getword(ws);
+
+    try{
+    	wstring ws = word_blank[word];
+    	string str (ws.begin(), ws.end());
+    	result = str + result;
+    }
+    catch(const char* msg){
+    	wcerr << "Error found!\n" << endl;
+    }
+
+
+
+    	// if(!xmlStrcmp(i->name, (const xmlChar *) "tags"))
+     //  	{
+     //  		cout << "Tags leke aaye hai: " << endl;
+     //    	result.append(processTags(i));
+     //   		result.append("{");
+     //  	}
+
+     //  // result.append(evalString(i));
     }      
   }
   
@@ -441,6 +471,7 @@ Interchunk::processChunk(xmlNode *localroot)
 void
 Interchunk::processInstruction(xmlNode *localroot)
 {
+
   if(!xmlStrcmp(localroot->name, (const xmlChar *) "choose"))
   {
     processChoose(localroot);
@@ -642,6 +673,8 @@ Interchunk::processCallMacro(xmlNode *localroot)
 
   int idx = 0;
   int lastpos = 0;
+
+  // npar is not used below anywhere.
   for(xmlNode *i = localroot->children; npar && i != NULL; i = i->next)
   {
     if(i->type == XML_ELEMENT_NODE)
@@ -673,13 +706,18 @@ Interchunk::processCallMacro(xmlNode *localroot)
   swap(myblank, blank);
   swap(npar, lword);
 
-  delete[] myword;
-  delete[] myblank;
+  if(myword){
+  	delete[] myword;
+  }
+  if(myblank){
+  	delete[] myblank;
+  }
 }
 
 void
 Interchunk::processChoose(xmlNode *localroot)
 {
+	//cout << "choosing..." << endl;
   for(xmlNode *i = localroot->children; i != NULL; i = i->next)
   {
     if(i->type == XML_ELEMENT_NODE)
@@ -1290,78 +1328,92 @@ Interchunk::readToken(FILE *in)
     return input_buffer.next();
   }
 
-  wstring content;
+  wstring content, preblank;
   while(true)
   {
     int val = fgetwc_unlocked(in);
     if(feof(in) || (internal_null_flush && val == 0))
     {
       return input_buffer.add(TransferToken(content, tt_eof));
-    }
+    }	
     if(val == L'\\')
     {  
       content += L'\\';
       content += wchar_t(fgetwc_unlocked(in));
     }
+    //adds the tag wala box "[]" in the string.
     else if(val == L'[')
     {
       content += L'[';
+      // int val2 = fgetwc_unlocked(in);
+      // bool is_format;
+      // if(val2 == L'{'){
+      // 	formatstart = content.size()-1;
+      // 	is_format = true;
+      // }
+      // else{
+      // 	is_format = false;
+      // }
+
       while(true)
       {
-	int val2 = fgetwc_unlocked(in);
-	if(val2 == L'\\')
-	{
-	  content += L'\\';
-	  content += wchar_t(fgetwc_unlocked(in));
-	}
-	else if(val2 == L']')
-	{
-	  content += L']';
-	  break;
-	}
-	else
-	{
-	  content += wchar_t(val2);
-	}
+			int val2 = fgetwc_unlocked(in);
+			if(val2 == L'\\')
+			{
+			  // content += L'\\';
+			  content += wchar_t(fgetwc_unlocked(in));
+			}
+			else if(val2 == L']')
+			{
+			  content += L']';
+			  break;
+			}
+			else
+			{
+			  content += wchar_t(val2);
+			}
       }
     }
+
     else if(inword && val == L'{')
     {
       content += L'{';
       while(true)
       {
-	int val2 = fgetwc_unlocked(in);
-	if(val2 == L'\\')
-	{
-	  content += L'\\';
-	  content += wchar_t(fgetwc_unlocked(in));
-	}
-	else if(val2 == L'}')
-	{
-	  wint_t val3 = wchar_t(fgetwc_unlocked(in));
-	  ungetwc(val3, in);
-	  
-	  content += L'}';
-	  if(val3 == L'$')
-	  {
-	    break;  
-	  }
-	}
-	else
-	{
-	  content += wchar_t(val2);
-	}
+			int val2 = fgetwc_unlocked(in);
+			if (val2 == L'\\')
+			{
+			  content += L'\\';
+			  content += wchar_t(fgetwc_unlocked(in));
+			}
+			else if(val2 == L'}')
+			{
+			  wint_t val3 = wchar_t(fgetwc_unlocked(in));
+			  ungetwc(val3, in);
+			  
+			  content += L'}';
+			  if(val3 == L'$')
+			  {
+			    break;  
+			  }
+			}
+			else
+			{
+			  content += wchar_t(val2);
+			}
       }
     }
     else if(inword && val == L'$')
     {
       inword = false;
-      return input_buffer.add(TransferToken(content, tt_word));
+      return input_buffer.add(TransferToken(content, tt_word, preblank));
     }
     else if(val == L'^')
     {
       inword = true;
-      return input_buffer.add(TransferToken(content, tt_eof)); // TODO blanks!
+      preblank.swap(content);
+      // return input_buffer.add(TransferToken(content, tt_eof)); // TODO blanks!
+
     }
     else
     {
@@ -1408,6 +1460,25 @@ Interchunk::interchunk_wrapper_null_flush(FILE *in, FILE *out)
   null_flush = true;
 }    
 
+wstring
+Interchunk::getword(wstring const &str)
+{
+  int l = str.length();
+  int j = 0;
+  wstring temp_word = L"";
+  while(j < l)
+  {
+    if(str[j]==L'^')
+    {
+      j++;
+      while(str[j]!=L'<')
+        temp_word += str[j++];
+      return temp_word;
+    }
+    j++;
+  }
+  return L"";
+}
 
 void
 Interchunk::interchunk(FILE *in, FILE *out)
@@ -1418,7 +1489,7 @@ Interchunk::interchunk(FILE *in, FILE *out)
   }
   
   int last = 0;
-
+  position = -1;
   output = out;
   ms.init(me->getInitial());
   
@@ -1428,15 +1499,23 @@ Interchunk::interchunk(FILE *in, FILE *out)
     {
       if(lastrule != NULL)
       {
-	applyRule();
-	input_buffer.setPos(last);
+			tmpword.pop_back();
+			applyRule(lastrule);
+			lastrule = NULL;
+			tmpword.clear();
+			ms.init(me->getInitial());      		
+			input_buffer.setPos(last);
+
+
+
       }
       else
       {
 	if(tmpword.size() != 0)
 	{
+          fputws_unlocked(tmpword[0]->getSuperblank().c_str(), output);
           fputwc_unlocked(L'^', output);
-          fputws_unlocked(tmpword[0]->c_str(), output);
+          fputws_unlocked(tmpword[0]->getContent().c_str(), output);
           fputwc_unlocked(L'$', output);
 	  tmpword.clear();
 	  input_buffer.setPos(last);
@@ -1444,13 +1523,13 @@ Interchunk::interchunk(FILE *in, FILE *out)
 	  last = input_buffer.getPos();
 	  ms.init(me->getInitial());
 	}
-	else if(tmpblank.size() != 0)
-	{
-	  fputws_unlocked(tmpblank[0]->c_str(), output);
-	  tmpblank.clear();
-	  last = input_buffer.getPos();
-	  ms.init(me->getInitial());
-	}
+	// else if(tmpblank.size() != 0)
+	// {
+	//   fputws_unlocked(tmpblank[0]->c_str(), output);
+	//   tmpblank.clear();
+	//   last = input_buffer.getPos();
+	//   ms.init(me->getInitial());
+	// }
       }
     }
     int val = ms.classifyFinals(me->getFinals());
@@ -1458,6 +1537,7 @@ Interchunk::interchunk(FILE *in, FILE *out)
     {
       lastrule = rule_map[val-1];      
       last = input_buffer.getPos();
+      wcerr << L"finals found, last_out set to: " << last << endl;
 
       if(trace)
       {
@@ -1468,19 +1548,21 @@ Interchunk::interchunk(FILE *in, FILE *out)
           {
             wcerr << L" ";
           }
-          fputws_unlocked(tmpword[ind]->c_str(), stderr);
+          wcerr << tmpword[ind]->getContent();
+          // fputws_unlocked(tmpword[ind]->c_str(), stderr);
         }
         wcerr << endl;
       }
     }
 
     TransferToken &current = readToken(in);
-   
+	wcerr << "\nToken is " << current.getContent() << endl;
     switch(current.getType())
     {
       case tt_word:
-	applyWord(current.getWord());
-        tmpword.push_back(&current.getWord());
+        wcerr <<L"tt_word, tmpword.size()=="<<tmpword.size()<<L" word="<<current.getWord()<<endl;
+		applyWord(current.getContent());
+        tmpword.push_back(&current);
 	break;
 
   //     case tt_superblank:
@@ -1489,15 +1571,15 @@ Interchunk::interchunk(FILE *in, FILE *out)
 	// break;
 
       case tt_eof:
+        wcerr <<L"tt_eof, tmpword.size()=="<<tmpword.size()<<L" word="<<current.getWord()<<endl;
 	if(tmpword.size() != 0)
 	{
-	  tmpblank.push_back(&current.getWord());
+	  tmpword.push_back(&current);
 	  ms.clear();
 	}
 	else
 	{
-	  fputws_unlocked(current.getWord().c_str(), output);
-	  tmpblank.clear();
+	  fputws_unlocked(current.getContent().c_str(), output);
 	  return;
 	}
 	break;
@@ -1509,16 +1591,19 @@ Interchunk::interchunk(FILE *in, FILE *out)
   }
 }
 
+
 void
-Interchunk::applyRule()
+Interchunk::applyRule(xmlNode *rule)
 {
   unsigned int limit = tmpword.size();
-  
+  number = limit-1;
+  wcerr << "applyRule: " << limit << endl;
   for(unsigned int i = 0; i != limit; i++)
   {
     if(i == 0)
     {
       word = new InterchunkWord *[limit];
+      superblanks = new string *[limit];
       lword = limit;
       if(limit != 1)
       {
@@ -1533,10 +1618,17 @@ Interchunk::applyRule()
     }
     else
     {
-      blank[i-1] = new string(UtfConverter::toUtf8(*tmpblank[i-1]));
+      blank[i-1] = new string(UtfConverter::toUtf8(L""));
     }
+    superblanks[i] = new string(UtfConverter::toUtf8(tmpword[i]->getSuperblank()));
+    word[i] = new InterchunkWord(UtfConverter::toUtf8(tmpword[i]->getContent()));
     
-    word[i] = new InterchunkWord(UtfConverter::toUtf8(*tmpword[i]));
+    wcerr << "Word[" << i <<  "] = " << tmpword[i]->getContent() << endl;
+
+    wcerr << "blank is " << tmpword[i]->getSuperblank() << endl;
+    
+    // wstring temp_word = getword(tmpword[i]->getContent());
+	// word_blank[temp_word] = tmpword[i]->getSuperblank();
   }
 
   processRule(lastrule);
@@ -1561,7 +1653,8 @@ Interchunk::applyRule()
   word = NULL;
   blank = NULL;
   tmpword.clear();
-  tmpblank.clear();
+  // word_blank.clear();
+  // tmpblank.clear();
   ms.init(me->getInitial());
 }
 

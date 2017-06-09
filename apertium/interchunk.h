@@ -49,16 +49,18 @@ private:
   map<string, int, Ltstr> macros;
   map<string, set<string, Ltstr>, Ltstr> lists;
   map<string, set<string, Ltstr>, Ltstr> listslow;
+  map<wstring, wstring> word_blank;
   vector<xmlNode *> macro_map;
   vector<xmlNode *> rule_map;
   xmlDoc *doc;
   xmlNode *root_element;
   InterchunkWord **word;
   string **blank;
-  int lword, lblank;
+  string **superblanks;
+  int lword, lblank, position, number;
   Buffer<TransferToken> input_buffer;
-  vector<wstring *> tmpword;
-  vector<wstring *> tmpblank;
+  vector<TransferToken *> tmpword;
+  // vector<wstring *> tmpblank;
 
   FILE *output;
   int any_char;
@@ -74,6 +76,7 @@ private:
   bool trace;
   string emptyblank;
   
+  void copy(Interchunk const &o);
   void destroy();
   void readData(FILE *input);
   void readInterchunk(string const &input);
@@ -103,7 +106,9 @@ private:
   string evalString(xmlNode *localroot);
   void processInstruction(xmlNode *localroot);
   void processChoose(xmlNode *localroot);
+  // string processTags(xmlNode *localroot);
   string processChunk(xmlNode *localroot);
+  wstring getword(wstring const &str);
 
   bool beginsWith(string const &str1, string const &str2) const;
   bool endsWith(string const &str1, string const &str2) const;
@@ -113,7 +118,7 @@ private:
   string readBlank(FILE *in);
   string readUntil(FILE *in, int const symbol) const;
   void applyWord(wstring const &word_str);
-  void applyRule();
+  void applyRule(xmlNode *rule);
   TransferToken & readToken(FILE *in);
   bool checkIndex(xmlNode *element, int index, int limit); 
   void interchunk_wrapper_null_flush(FILE *in, FILE *out);
@@ -121,6 +126,9 @@ private:
 public:
   Interchunk();
   ~Interchunk();
+
+  Interchunk(Interchunk const &o);
+  Interchunk & operator =(Interchunk const &o);
   
   void read(string const &transferfile, string const &datafile);
   void interchunk(FILE *in, FILE *out);

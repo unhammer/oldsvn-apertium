@@ -24,7 +24,7 @@ void
 TransferToken::copy(TransferToken const &o)
 {
   type = o.type;
-  word = o.word;
+  content = o.content;
   superblank = o.superblank;
   freeblank = o.freeblank;
   format = o.format;
@@ -35,14 +35,13 @@ TransferToken::destroy()
 {
 }
 
-TransferToken::TransferToken() :
-type(tt_eof)
+TransferToken::TransferToken() 
 {
 }
 
-TransferToken::TransferToken(wstring const &word, TransferTokenType type)
+TransferToken::TransferToken(wstring const &content, TransferTokenType type)
 {
-  this->word = word;
+  this->content = content;
   this->type = type;
 }
 
@@ -53,10 +52,10 @@ TransferToken::TransferToken(TransferTokenType type,
   this->superblank = superblank;
 }
 
-TransferToken::TransferToken(wstring const &word, TransferTokenType type,
+TransferToken::TransferToken(wstring const &content, TransferTokenType type,
                              wstring const &blank, int superend, int formatstart)
 {
-  this->word = word;
+  this->content = content;
   this->type = type;
 
   int end = (int) blank.size();
@@ -75,6 +74,14 @@ TransferToken::TransferToken(wstring const &word, TransferTokenType type,
   }
 
 
+}
+
+TransferToken::TransferToken(wstring const &content, TransferTokenType type,
+                             wstring const &blank)
+{
+  this->content = content;
+  this->type = type;
+  this->superblank = blank;
 }
 
 TransferToken::~TransferToken()
@@ -128,10 +135,22 @@ TransferToken::getFormat()
   return format;
 }
 
+wstring & 
+TransferToken::getContent()
+{
+  return content;
+}
+
 void 
 TransferToken::setType(TransferTokenType type)
 {
   this->type = type;
+}
+
+void 
+TransferToken::setContent(wstring const &content)
+{
+  this->content = content;
 }
 
 void 
