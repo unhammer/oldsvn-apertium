@@ -241,7 +241,6 @@ Interchunk::evalString(xmlNode *element)
   {
     throw "Interchunk::evalString() was passed a NULL element";
   }
-  // cout << "eval string: " << endl;
   map<xmlNode *, TransferInstr>::iterator it;
   it = evalStringCache.find(element);
   if(it != evalStringCache.end())
@@ -416,6 +415,7 @@ Interchunk::processOut(xmlNode *localroot)
     {
       if(!xmlStrcmp(i->name, (const xmlChar *) "chunk"))
       {
+        // this is the part which has the final output
         fputws_unlocked(UtfConverter::fromUtf8(processChunk(i)).c_str(), output);
       }
       else // 'b'
@@ -430,6 +430,8 @@ string
 Interchunk::processChunk(xmlNode *localroot)
 {
   string result;
+  // to add the starting superblank to the result string. (tmpword[0] has the non-inline tags as the superblank.)
+  result.append(string(UtfConverter::toUtf8(tmpword[0]->getSuperblank())));
   result.append("^");
   
   for(xmlNode *i = localroot->children; i != NULL; i = i->next)
@@ -442,25 +444,14 @@ Interchunk::processChunk(xmlNode *localroot)
     	wstring ws = UtfConverter::fromUtf8(s);
     	wstring word = getword(ws);
 
-    try{
-    	wstring ws = word_blank[word];
-    	string str (ws.begin(), ws.end());
-    	result = str + result;
-    }
-    catch(const char* msg){
-    	wcerr << "Error found!\n" << endl;
-    }
-
-
-
-    	// if(!xmlStrcmp(i->name, (const xmlChar *) "tags"))
-     //  	{
-     //  		cout << "Tags leke aaye hai: " << endl;
-     //    	result.append(processTags(i));
-     //   		result.append("{");
-     //  	}
-
-     //  // result.append(evalString(i));
+      try{
+      	wstring ws = word_blank[word];
+      	string str (ws.begin(), ws.end());
+      	result = str + result;
+      }
+      catch(const char* msg){
+      	wcerr << "Error found!\n" << endl;
+      }
     }      
   }
   
@@ -658,7 +649,6 @@ Interchunk::processCallMacro(xmlNode *localroot)
   }
 
   // ToDo: Is it at all valid if npar <= 0 ?
-
   InterchunkWord **myword = NULL;
   if(npar > 0)
   {
@@ -717,7 +707,6 @@ Interchunk::processCallMacro(xmlNode *localroot)
 void
 Interchunk::processChoose(xmlNode *localroot)
 {
-	//cout << "choosing..." << endl;
   for(xmlNode *i = localroot->children; i != NULL; i = i->next)
   {
     if(i->type == XML_ELEMENT_NODE)
@@ -1345,22 +1334,11 @@ Interchunk::readToken(FILE *in)
     else if(val == L'[')
     {
       content += L'[';
-      // int val2 = fgetwc_unlocked(in);
-      // bool is_format;
-      // if(val2 == L'{'){
-      // 	formatstart = content.size()-1;
-      // 	is_format = true;
-      // }
-      // else{
-      // 	is_format = false;
-      // }
-
       while(true)
       {
 			int val2 = fgetwc_unlocked(in);
 			if(val2 == L'\\')
 			{
-			  // content += L'\\';
 			  content += wchar_t(fgetwc_unlocked(in));
 			}
 			else if(val2 == L']')
@@ -1412,8 +1390,6 @@ Interchunk::readToken(FILE *in)
     {
       inword = true;
       preblank.swap(content);
-      // return input_buffer.add(TransferToken(content, tt_eof)); // TODO blanks!
-
     }
     else
     {
@@ -1523,13 +1499,6 @@ Interchunk::interchunk(FILE *in, FILE *out)
 	  last = input_buffer.getPos();
 	  ms.init(me->getInitial());
 	}
-	// else if(tmpblank.size() != 0)
-	// {
-	//   fputws_unlocked(tmpblank[0]->c_str(), output);
-	//   tmpblank.clear();
-	//   last = input_buffer.getPos();
-	//   ms.init(me->getInitial());
-	// }
       }
     }
     int val = ms.classifyFinals(me->getFinals());
