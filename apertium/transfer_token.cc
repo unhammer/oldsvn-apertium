@@ -23,6 +23,7 @@ using namespace Apertium;
 void
 TransferToken::copy(TransferToken const &o)
 {
+  word = o.word;
   type = o.type;
   content = o.content;
   superblank = o.superblank;
@@ -41,6 +42,7 @@ TransferToken::TransferToken()
 
 TransferToken::TransferToken(wstring const &content, TransferTokenType type)
 {
+  this->word = content;
   this->content = content;
   this->type = type;
 }
@@ -55,6 +57,7 @@ TransferToken::TransferToken(TransferTokenType type,
 TransferToken::TransferToken(wstring const &content, TransferTokenType type,
                              wstring const &blank, int superend, int formatstart)
 {
+  this->word = content;
   this->content = content;
   this->type = type;
 
