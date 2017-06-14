@@ -32,11 +32,6 @@ using namespace Apertium;
 using namespace std;
 
 void
-Interchunk::copy(Interchunk const &o)
-{
-}
-
-void
 Interchunk::destroy()
 {
   delete me;
@@ -49,7 +44,13 @@ Interchunk::destroy()
   }  
 }
 
-Interchunk::Interchunk()
+Interchunk::Interchunk() :
+word(0),
+lword(0),
+output(0),
+any_char(0),
+any_tag(0),
+nwords(0)
 {
   me = NULL;
   doc = NULL;
@@ -67,18 +68,12 @@ Interchunk::~Interchunk()
   destroy();
 }
 
-Interchunk::Interchunk(Interchunk const &o)
-{
-  copy(o);
-}
-
 Interchunk &
 Interchunk::operator =(Interchunk const &o)
 {
   if(this != &o)
   {
     destroy();
-    copy(o);
   }
   return *this;
 }
@@ -228,6 +223,15 @@ Interchunk::checkIndex(xmlNode *element, int index, int limit)
   if(index >= limit)
   {
     wcerr << L"Error in " << UtfConverter::fromUtf8((char *) doc->URL) << L": line " << element->line << L": index >= limit" << endl;
+    return false;
+  }
+  if(index < 0) {
+    wcerr << L"Error in " << UtfConverter::fromUtf8((char *) doc->URL) << L": line " << element->line << L": index < 0" << endl;
+    return false;
+  }
+  if(word[index] == 0)
+  {
+    wcerr << L"Error in " << UtfConverter::fromUtf8((char *) doc->URL) << L": line " << element->line << L": Null access at word[index]" << endl;
     return false;
   }
   return true;
@@ -431,28 +435,15 @@ Interchunk::processChunk(xmlNode *localroot)
 {
   string result;
   // to add the starting superblank to the result string. (tmpword[0] has the non-inline tags as the superblank.)
-  result.append(string(UtfConverter::toUtf8(tmpword[0]->getSuperblank())));
+  // result.append(string(UtfConverter::toUtf8(tmpword[0]->getSuperblank())));
   result.append("^");
   
   for(xmlNode *i = localroot->children; i != NULL; i = i->next)
   {
     if(i->type == XML_ELEMENT_NODE)
-    {
-    
-    	string s = evalString(i);
-    	result.append(s);
-    	wstring ws = UtfConverter::fromUtf8(s);
-    	wstring word = getword(ws);
-
-      try{
-      	wstring ws = word_blank[word];
-      	string str (ws.begin(), ws.end());
-      	result = str + result;
-      }
-      catch(const char* msg){
-      	wcerr << "Error found!\n" << endl;
-      }
-    }      
+    {      
+  	 result.append(evalString(i));
+    }
   }
   
   result.append("$");
@@ -1318,6 +1309,7 @@ Interchunk::readToken(FILE *in)
   }
 
   wstring content, preblank;
+  int superend = 0, formatstart = -1;
   while(true)
   {
     int val = fgetwc_unlocked(in);
@@ -1334,22 +1326,30 @@ Interchunk::readToken(FILE *in)
     else if(val == L'[')
     {
       content += L'[';
+      int val2 = fgetwc_unlocked(in);
+      bool is_format;
+      if(val2==L'{'){
+      	formatstart = content.size() - 1;
+      	is_format = true;
+      }
+      else{
+      	is_format = false;
+      }
       while(true)
       {
-			int val2 = fgetwc_unlocked(in);
+      		content += wchar_t(val2);
 			if(val2 == L'\\')
 			{
 			  content += wchar_t(fgetwc_unlocked(in));
 			}
 			else if(val2 == L']')
 			{
-			  content += L']';
+				if(!is_format){
+					superend = content.size();
+				}
 			  break;
 			}
-			else
-			{
-			  content += wchar_t(val2);
-			}
+			val2 = fgetwc_unlocked(in);
       }
     }
 
@@ -1358,33 +1358,38 @@ Interchunk::readToken(FILE *in)
       content += L'{';
       while(true)
       {
-			int val2 = fgetwc_unlocked(in);
-			if (val2 == L'\\')
-			{
-			  content += L'\\';
-			  content += wchar_t(fgetwc_unlocked(in));
-			}
-			else if(val2 == L'}')
-			{
-			  wint_t val3 = wchar_t(fgetwc_unlocked(in));
-			  ungetwc(val3, in);
-			  
-			  content += L'}';
-			  if(val3 == L'$')
-			  {
-			    break;  
-			  }
-			}
-			else
-			{
-			  content += wchar_t(val2);
-			}
+      int val2 = fgetwc_unlocked(in);
+      if (val2 == L'\\')
+      {
+        content += L'\\';
+        content += wchar_t(fgetwc_unlocked(in));
+      }
+      else if(val2 == L'}')
+      {
+        wint_t val3 = wchar_t(fgetwc_unlocked(in));
+        ungetwc(val3, in);
+        
+        content += L'}';
+        if(val3 == L'$')
+        {
+          break;  
+        }
+      }
+      else
+      {
+        content += wchar_t(val2);
+      }
       }
     }
     else if(inword && val == L'$')
-    {
+    { 
       inword = false;
-      return input_buffer.add(TransferToken(content, tt_word, preblank));
+      if(formatstart >= 0)
+      { 
+        wcerr <<L"Warning: unexpected wordblank outside chunk in interchunk; treating as superblank" << std::endl; 
+        formatstart = -1;
+      }
+      return input_buffer.add(TransferToken(content, tt_word, preblank, superend, formatstart));
     }
     else if(val == L'^')
     {
@@ -1476,23 +1481,24 @@ Interchunk::interchunk(FILE *in, FILE *out)
       if(lastrule != NULL)
       {
 			tmpword.pop_back();
+      for(unsigned int ind = 0; ind < tmpword.size(); ind++)
+      {
+        fputws_unlocked(tmpword[ind]->getSuperblank().c_str(), output);
+      }
 			applyRule(lastrule);
 			lastrule = NULL;
 			tmpword.clear();
 			ms.init(me->getInitial());      		
 			input_buffer.setPos(last);
-
-
-
       }
       else
       {
 	if(tmpword.size() != 0)
 	{
-          fputws_unlocked(tmpword[0]->getSuperblank().c_str(), output);
-          fputwc_unlocked(L'^', output);
-          fputws_unlocked(tmpword[0]->getContent().c_str(), output);
-          fputwc_unlocked(L'$', output);
+    fputws_unlocked(tmpword[0]->getSuperblank().c_str(), output);
+    fputwc_unlocked(L'^', output);
+    fputws_unlocked(tmpword[0]->getContent().c_str(), output);
+    fputwc_unlocked(L'$', output);
 	  tmpword.clear();
 	  input_buffer.setPos(last);
 	  input_buffer.next();       
@@ -1589,15 +1595,11 @@ Interchunk::applyRule(xmlNode *rule)
     {
       blank[i-1] = new string(UtfConverter::toUtf8(L""));
     }
-    superblanks[i] = new string(UtfConverter::toUtf8(tmpword[i]->getSuperblank()));
     word[i] = new InterchunkWord(UtfConverter::toUtf8(tmpword[i]->getContent()));
     
     wcerr << "Word[" << i <<  "] = " << tmpword[i]->getContent() << endl;
 
     wcerr << "blank is " << tmpword[i]->getSuperblank() << endl;
-    
-    // wstring temp_word = getword(tmpword[i]->getContent());
-	// word_blank[temp_word] = tmpword[i]->getSuperblank();
   }
 
   processRule(lastrule);

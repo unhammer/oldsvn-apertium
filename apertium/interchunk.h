@@ -76,7 +76,6 @@ private:
   bool trace;
   string emptyblank;
   
-  void copy(Interchunk const &o);
   void destroy();
   void readData(FILE *input);
   void readInterchunk(string const &input);
