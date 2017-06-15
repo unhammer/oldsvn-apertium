@@ -55,16 +55,26 @@ class BlanksInterchunkTest(InterchunkTest):
     inputs =            ["[<div>]^Nom_adj<SN><UNDET><f><sg>{[{<i><b>}]^mente<n><3><4>$ [{<em>}]^bello<adj><3><4>$}$^punt<sent>{^.<sent>$}$",
                          "^Det_det_nom<SN><DET><GD><pl>{[{<i>}]^todo<predet><3><4>$ [{<i>}]^el<det><def><3><pl>$  [{<b>}]^estudiante<n><mf><4>$}$"
                         ]
-
     expectedOutputs =   ["[<div>]^Nom_adj<SN><UNDET><f><sg>{[{<i><b>}]^mente<n><3><4>$ [{<em>}]^bello<adj><3><4>$}$^punt<sent>{^.<sent>$}$",
                         "^Det_det_nom<SN><DET><m><pl>{[{<i>}]^todo<predet><3><4>$ [{<i>}]^el<det><def><3><pl>$  [{<b>}]^estudiante<n><mf><4>$}$"
                         ]
 
 class BasicInterchunkTest(InterchunkTest):
     inputs =            ["^Nom_adj<SN><UNDET><GD><sg>{^Perro<n><3><4>$ ^blanco<adj><3><4>$}$",
-                        "^Det_det_nom<SN><DET><GD><pl>{^todo<predet><3><4>$ ^el<det><def><3><pl>$  ^estudiante<n><mf><4>$}$"
+                        "^Nom_adj<SN><UNDET><GD><sg>{^Perro<n><3><4>$^blanco<adj><3><4>$}$",
+                        "^Det_det_nom<SN><DET><GD><pl>{^todo<predet><3><4>$ ^el<det><def><3><pl>$  ^estudiante<n><mf><4>$}$",
+                        "^Det_det_nom<SN><DET><GD><pl>{^todo<predet><3><4>$🍰^el<det><def><3><pl>$  ^estudiante<n><mf><4>$}$"
+                        ]
+    expectedOutputs =   ["^Nom_adj<SN><UNDET><m><sg>{^Perro<n><3><4>$ ^blanco<adj><3><4>$}$",
+                        "^Nom_adj<SN><UNDET><m><sg>{^Perro<n><3><4>$^blanco<adj><3><4>$}$",
+                        "^Det_det_nom<SN><DET><m><pl>{^todo<predet><3><4>$ ^el<det><def><3><pl>$  ^estudiante<n><mf><4>$}$",
+                        "^Det_det_nom<SN><DET><GD><pl>{^todo<predet><3><4>$🍰^el<det><def><3><pl>$  ^estudiante<n><mf><4>$}$"
                         ]
 
-    expectedOutputs =   ["^Nom_adj<SN><UNDET><m><sg>{^Perro<n><3><4>$ ^blanco<adj><3><4>$}$",
-                        "^Det_det_nom<SN><DET><m><pl>{^todo<predet><3><4>$ ^el<det><def><3><pl>$  ^estudiante<n><mf><4>$}$"
+class MultiInterchunkTest(InterchunkTest):
+    inputs =            ["^Ger<SV><vblex><ger><PD><ND>{^ir<vblex><3>$}$ ^Nom<SN><UNDET><f><sg>{^casa<n><3><4>$}$",
+                        "[<div>]^Ger<SV><vblex><ger><PD><ND>{^correr<vblex><3>$}$ 🍰 ^Adj<SA><GD><ND>{[{<em>}]^rápido<adj><2><3>$}$"
+                        ]
+    expectedOutputs =   ["^Ger<SV><vblex><ger><PD><ND>{^ir<vblex><3>$}$ ^Nom<SN><UNDET><f><sg>{^casa<n><3><4>$}$",
+                        "[<div>]^Ger<SV><vblex><ger><PD><ND>{^correr<vblex><3>$}$ 🍰 ^Adj<SA><m><sg>{[{<em>}]^rápido<adj><2><3>$}$"
                         ]

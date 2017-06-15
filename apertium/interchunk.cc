@@ -275,16 +275,22 @@ Interchunk::evalString(xmlNode *element)
         return ti.getContent();
         
       case ti_b:
-        if(checkIndex(element, ti.getPos(), lblank))
-        {
-        	if(ti.getPos() >= 0){
-        		if(blank){
-        			return *blank[ti.getPos()];
-        		}
-        	}
-        return " ";
+        if(freeblank.empty()) {
+            return " ";
         }
-        break;
+        else {
+          wstring blank = freeblank.front();
+          freeblank.pop_front();
+          wcerr <<L"blank=?"<<blank<<endl;
+          if(blank.empty())     // TODO: or?
+          {
+            return " ";
+          }
+          else {
+            wcerr <<L"blank="<<blank<<endl;
+            return UtfConverter::toUtf8(blank).c_str();
+          }
+        }
             
       case ti_get_case_from:
         if(checkIndex(element, ti.getPos(), lword))
@@ -1580,6 +1586,7 @@ Interchunk::applyRule(xmlNode *rule)
       word = new InterchunkWord *[limit];
       superblanks = new string *[limit];
       lword = limit;
+      fputws_unlocked(tmpword[i]->getFreeblank().c_str(), output);
       if(limit != 1)
       {
         blank = new string *[limit - 1];
@@ -1590,6 +1597,10 @@ Interchunk::applyRule(xmlNode *rule)
         blank = NULL;
         lblank = 0;
       }
+    }
+    else if(!tmpword[i]->getFreeblank().empty())
+    {
+      freeblank.push_back(tmpword[i]->getFreeblank());
     }
     else
     {
@@ -1604,6 +1615,14 @@ Interchunk::applyRule(xmlNode *rule)
 
   processRule(lastrule);
   lastrule = NULL;
+
+  if(!freeblank.empty())
+        {
+    for(deque<wstring>::const_iterator it = freeblank.begin(); it != freeblank.end(); it++)
+    {
+      fputws_unlocked(it->c_str(), output);
+    }
+  }
 
   if(word)
   {

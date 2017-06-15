@@ -34,6 +34,7 @@
 #include <map>
 #include <set>
 #include <vector>
+#include <deque>
 
 using namespace std;
 
@@ -57,6 +58,7 @@ private:
   InterchunkWord **word;
   string **blank;
   string **superblanks;
+  deque<wstring> freeblank;   
   int lword, lblank, position, number;
   Buffer<TransferToken> input_buffer;
   vector<TransferToken *> tmpword;
