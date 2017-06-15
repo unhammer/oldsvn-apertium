@@ -37,7 +37,7 @@ stuff) to create new pretransfer tests."""
 
             for inp, exp in zip(self.inputs, self.expectedOutputs):
                 self.proc = Popen(['../apertium/apertium-interchunk', 'data/apertium-en-es.en-es.t2x', 'data/en-es.t2x.bin'], stdin = PIPE, stdout=PIPE, )
-                self.assertEqual(self.proc.communicate(input=inp.encode('utf-8'))[0].strip().decode('utf-8')+"[][\n]", exp+"[][\n]")
+                self.assertEqual(self.proc.communicate(input=inp.decode('utf-8').encode('utf-8'))[0].strip().decode('utf-8').encode('utf-8')+"[][\n]", exp+"[][\n]")
                 #strip and decode to remove '\n' at the end of output of communicate()
                 #communicat() does the closing too.
 
@@ -68,13 +68,16 @@ class BasicInterchunkTest(InterchunkTest):
     expectedOutputs =   ["^Nom_adj<SN><UNDET><m><sg>{^Perro<n><3><4>$ ^blanco<adj><3><4>$}$",
                         "^Nom_adj<SN><UNDET><m><sg>{^Perro<n><3><4>$^blanco<adj><3><4>$}$",
                         "^Det_det_nom<SN><DET><m><pl>{^todo<predet><3><4>$ ^el<det><def><3><pl>$  ^estudiante<n><mf><4>$}$",
-                        "^Det_det_nom<SN><DET><GD><pl>{^todo<predet><3><4>$🍰^el<det><def><3><pl>$  ^estudiante<n><mf><4>$}$"
+                        "^Det_det_nom<SN><DET><m><pl>{^todo<predet><3><4>$🍰^el<det><def><3><pl>$  ^estudiante<n><mf><4>$}$"
                         ]
 
 class MultiInterchunkTest(InterchunkTest):
     inputs =            ["^Ger<SV><vblex><ger><PD><ND>{^ir<vblex><3>$}$ ^Nom<SN><UNDET><f><sg>{^casa<n><3><4>$}$",
+                        "^SN<sg>{^cheese<n>$}$🍰^SN<sg>{^sale<n>$}$",
                         "[<div>]^Ger<SV><vblex><ger><PD><ND>{^correr<vblex><3>$}$ 🍰 ^Adj<SA><GD><ND>{[{<em>}]^rápido<adj><2><3>$}$"
+
                         ]
     expectedOutputs =   ["^Ger<SV><vblex><ger><PD><ND>{^ir<vblex><3>$}$ ^Nom<SN><UNDET><f><sg>{^casa<n><3><4>$}$",
+                        "^SN<sg>{^cheese<n>$}$🍰^SN<sg>{^sale<n>$}$",
                         "[<div>]^Ger<SV><vblex><ger><PD><ND>{^correr<vblex><3>$}$ 🍰 ^Adj<SA><m><sg>{[{<em>}]^rápido<adj><2><3>$}$"
                         ]

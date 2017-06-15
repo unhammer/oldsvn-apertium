@@ -1502,6 +1502,7 @@ Interchunk::interchunk(FILE *in, FILE *out)
 	if(tmpword.size() != 0)
 	{
     fputws_unlocked(tmpword[0]->getSuperblank().c_str(), output);
+    fputws_unlocked(tmpword[0]->getFreeblank().c_str(), output);
     fputwc_unlocked(L'^', output);
     fputws_unlocked(tmpword[0]->getContent().c_str(), output);
     fputwc_unlocked(L'$', output);
