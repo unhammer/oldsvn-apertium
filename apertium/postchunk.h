@@ -33,6 +33,7 @@
 #include <map>
 #include <set>
 #include <vector>
+#include <deque>
 
 using namespace std;
 
@@ -54,7 +55,8 @@ private:
   xmlNode *root_element;
   InterchunkWord **word;
   string **blank;
-  int lword, lblank;
+  deque<wstring> freeblank;
+  int lword, lblank, position, number;
   Buffer<TransferToken> input_buffer;
   vector<wstring *> tmpword;
   vector<wstring *> tmpblank;
@@ -112,8 +114,9 @@ private:
   string readBlank(FILE *in);
   string readUntil(FILE *in, int const symbol) const;
   void applyWord(wstring const &word_str);
-  void applyRule();
+  void applyRule(xmlNode *rule);
   TransferToken & readToken(FILE *in);
+  wstring getword(wstring const &str);
   static void unchunk(wstring const &chunk, FILE *output);
   static vector<wstring> getVecTags(wstring const &chunk);
   static int beginChunk(wstring const &chunk);
@@ -130,6 +133,7 @@ public:
   Postchunk();
   ~Postchunk();
   
+
   void read(string const &transferfile, string const &datafile);
   void postchunk(FILE *in, FILE *out);
   bool getNullFlush(void);

@@ -259,14 +259,22 @@ Postchunk::evalString(xmlNode *element)
         return ti.getContent();
         
       case ti_b:
-        if(ti.getPos() >= 0 && checkIndex(element, ti.getPos(), lblank))
-        {
-          return !blank?"":*(blank[ti.getPos()]);
+        if(freeblank.empty()) {
+            return " ";
         }
         else {
-          return " ";
+          wstring blank = freeblank.front();
+          freeblank.pop_front();
+          wcerr <<L"blank=?"<<blank<<endl;
+          if(blank.empty())     // TODO: or?
+          {
+            return " ";
+          }
+          else {
+            wcerr <<L"blank="<<blank<<endl;
+            return UtfConverter::toUtf8(blank).c_str();
+          }
         }
-        break;
         
       case ti_get_case_from:
         if(checkIndex(element, ti.getPos(), lword))
@@ -793,8 +801,12 @@ Postchunk::processCallMacro(xmlNode *localroot)
   swap(myblank, blank);
   swap(npar, lword);
 
-  delete[] myword;
-  delete[] myblank;
+  if(myword){
+    delete[] myword;
+  }
+  if(myblank){
+    delete[] myblank;
+  }
 }
 
 void
@@ -1446,7 +1458,8 @@ Postchunk::readToken(FILE *in)
     return input_buffer.next();
   }
 
-  wstring content;
+  wstring content, preblank;
+  int superend = 0, formatstart = -1;
   while(true)
   {
     int val = fgetwc_unlocked(in);
@@ -1462,23 +1475,30 @@ Postchunk::readToken(FILE *in)
     else if(val == L'[')
     {
       content += L'[';
+      int val2 = fgetwc_unlocked(in);
+      bool is_format;
+      if(val2==L'{'){
+        formatstart = content.size() - 1;
+        is_format = true;
+      }
+      else{
+        is_format = false;
+      }
       while(true)
       {
-	int val2 = fgetwc_unlocked(in);
-	if(val2 == L'\\')
-	{
-	  content += L'\\';
-	  content += wchar_t(fgetwc_unlocked(in));
-	}
-	else if(val2 == L']')
-	{
-	  content += L']';
-	  break;
-	}
-	else
-	{
-	  content += wchar_t(val2);
-	}
+          content += wchar_t(val2);
+      if(val2 == L'\\')
+      {
+        content += wchar_t(fgetwc_unlocked(in));
+      }
+      else if(val2 == L']')
+      {
+        if(!is_format){
+          superend = content.size();
+        }
+        break;
+      }
+      val2 = fgetwc_unlocked(in);
       }
     }
     else if(inword && val == L'{')
@@ -1486,38 +1506,43 @@ Postchunk::readToken(FILE *in)
       content += L'{';
       while(true)
       {
-	int val2 = fgetwc_unlocked(in);
-	if(val2 == L'\\')
-	{
-	  content += L'\\';
-	  content += wchar_t(fgetwc_unlocked(in));
-	}
-	else if(val2 == L'}')
-	{
-	  int val3 = wchar_t(fgetwc_unlocked(in));
-	  ungetwc(val3, in);
-	  
-	  content += L'}';
-	  if(val3 == L'$')
-	  {
-	    break;  
-	  }
-	}
-	else
-	{
-	  content += wchar_t(val2);
-	}
+	    int val2 = fgetwc_unlocked(in);
+      if (val2 == L'\\')
+      {
+        content += L'\\';
+        content += wchar_t(fgetwc_unlocked(in));
+      }
+      else if(val2 == L'}')
+      {
+        wint_t val3 = wchar_t(fgetwc_unlocked(in));
+        ungetwc(val3, in);
+        
+        content += L'}';
+        if(val3 == L'$')
+        {
+          break;  
+        }
+      }
+      else
+      {
+        content += wchar_t(val2);
+      }
       }
     }
     else if(inword && val == L'$')
     {
       inword = false;
-      return input_buffer.add(TransferToken(content, tt_word));
+      if(formatstart >= 0)
+      { 
+        wcerr <<L"Warning: unexpected wordblank outside chunk in Postchunk; treating as superblank" << std::endl; 
+        formatstart = -1;
+      }
+      return input_buffer.add(TransferToken(content, tt_word, preblank, superend, formatstart));
     }
     else if(val == L'^')
     {
       inword = true;
-      return input_buffer.add(TransferToken(content, tt_eof)); // TODO blanks!
+      preblank.swap(content);
     }
     else
     {
@@ -1565,6 +1590,26 @@ Postchunk::postchunk_wrapper_null_flush(FILE *in, FILE *out)
   null_flush = true;
 }    
 
+wstring
+Postchunk::getword(wstring const &str)
+{
+  int l = str.length();
+  int j = 0;
+  wstring temp_word = L"";
+  while(j < l)
+  {
+    if(str[j]==L'^')
+    {
+      j++;
+      while(str[j]!=L'<')
+        temp_word += str[j++];
+      return temp_word;
+    }
+    j++;
+  }
+  return L"";
+}
+
 void
 Postchunk::postchunk(FILE *in, FILE *out)
 {
@@ -1574,7 +1619,7 @@ Postchunk::postchunk(FILE *in, FILE *out)
   }
   
   int last = 0;
-
+  position = -1;
   output = out;
   ms.init(me->getInitial());
   
@@ -1584,35 +1629,36 @@ Postchunk::postchunk(FILE *in, FILE *out)
     {
       if(lastrule != NULL)
       {
-	applyRule();
-	input_buffer.setPos(last);
+  applyRule(lastrule);
+  input_buffer.setPos(last);
       }
       else
       {
-	if(tmpword.size() != 0)
-	{
-	  unchunk(*tmpword[0], output);
-	  tmpword.clear();
-	  input_buffer.setPos(last);
-	  input_buffer.next();       
-	  last = input_buffer.getPos();
-	  ms.init(me->getInitial());
-	}
-	else if(tmpblank.size() != 0)
-	{
-	  fputws_unlocked(tmpblank[0]->c_str(), output);
-	  tmpblank.clear();
-	  last = input_buffer.getPos();
-	  ms.init(me->getInitial());
-	}
-      }
+  if(tmpword.size() != 0)
+  {
+    unchunk(*tmpword[0], output);
+    tmpword.clear();
+    input_buffer.setPos(last);
+    input_buffer.next();       
+    last = input_buffer.getPos();
+    ms.init(me->getInitial());
+  }
+  else if(tmpblank.size() != 0)
+  {
+    fputws_unlocked(tmpblank[0]->c_str(), output);
+    tmpblank.clear();
+    last = input_buffer.getPos();
+    ms.init(me->getInitial());
+  }
+}
     }
     int val = ms.classifyFinals(me->getFinals());
     if(val != -1)
     {
       lastrule = rule_map[val-1];      
       last = input_buffer.getPos();
-
+      wcerr << L"finals found, last_out set to: " << last << endl;
+      
       if(trace)
       {
         wcerr << endl << L"apertium-postchunk: Rule " << val << L" ";
@@ -1622,6 +1668,7 @@ Postchunk::postchunk(FILE *in, FILE *out)
           {
             wcerr << L" ";
           }
+          // wcerr << tmpword[ind]->getContent();
           fputws_unlocked(tmpword[ind]->c_str(), stderr);
         }
         wcerr << endl;
@@ -1645,7 +1692,7 @@ Postchunk::postchunk(FILE *in, FILE *out)
       case tt_eof:
 	if(tmpword.size() != 0)
 	{
-	  tmpblank.push_back(&current.getWord());
+	  tmpword.push_back(&current.getWord());
 	  ms.clear();
 	}
 	else
@@ -1663,7 +1710,7 @@ Postchunk::postchunk(FILE *in, FILE *out)
 }
 
 void
-Postchunk::applyRule()
+Postchunk::applyRule(xmlNode *rule)
 {
   wstring const chunk = *tmpword[0];
   tmpword.clear();
@@ -2100,4 +2147,3 @@ Postchunk::splitWordsAndBlanks(wstring const &chunk, vector<wstring *> &words,
     }
   }
 }
-
